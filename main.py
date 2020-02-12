@@ -62,9 +62,9 @@ class MainWindow(tk.Tk):
 
     def makeBorder(self,cursor='',command=None):
         size=8
-        b=tk.Frame(self,bg=colours['sides'],cursor=cursor,height=size,width=size)
-        b.bind('<B1-Motion>',self.resize)
-        return b
+        border=tk.Frame(self,bg=colours['sides'],cursor=cursor,height=size,width=size)
+        border.bind('<B1-Motion>',self.resize)
+        return border
     
     def gridWidgets(self):
         
