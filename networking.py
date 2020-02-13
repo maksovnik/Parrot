@@ -21,11 +21,6 @@ class Connection:
  
     def connect(self,schoolID,username,password):
         
-        self.schoolID=schoolID
-        self.username=username
-        self.password=password
-
-        
         self.PORT = 2002
         self.BUFSIZ = 16384
         self.ADDR = (self.host, self.PORT)
@@ -36,11 +31,10 @@ class Connection:
 
         self.sock.settimeout(None)
         
-        self.commKey=self.diffieHelman()
-        
-        credentials=self.schoolID,self.username,self.password
-        msg=','.join(credentials)
-        self.sendPackage([msg])
+        self.diffieHelman()
+
+        self.sendPackage([schoolID+','+username+','+password])
+
 
     def pad(self,s):
         return s + ((16-len(s) % 16) * '`')
@@ -74,12 +68,6 @@ class Connection:
         print('\nSecret Comm Key:\n',key.hex(),'\n')
 
         self.cipher=AES.new(key,AES.MODE_ECB)
-
-
-    def getResponse(self):
-        
-        msg = self.recvPackage()[0]
-        return msg
     
     def startRecvThread(self):
         self.receive_thread = Thread(target=self.recieve)
@@ -92,7 +80,7 @@ class Connection:
                 msg = self.recvPackage()
                 self.queue.put(msg)
                 
-        except (ConnectionResetError,ConnectionAbortedError) as e:
+        except (ConnectionResetError,ConnectionAbortedError):
             pass
             
 
@@ -128,22 +116,14 @@ class Connection:
 
     def sendPackage(self,msgs,encrypt=True):
 
-        for i in range(len(msgs)):
-            message=str(msgs[i])
+        message=str(msgs[0])
+        
+        if encrypt:
+            before=message
             
-            if encrypt:
-                before=message
-                
-                message=self.encrypt(message)
-                print(('\nEncrypted Message ({}):\n').format(before),message)
-                
-            if i==len(msgs)-1:
-                message=message+'END'
+            message=self.encrypt(message)
+            print(('\nEncrypted Message ({}):\n').format(before),message)
+        
+        message=message+'END'
 
-            else:
-                message=message+'/7/4534'
-
-            
-                
-            self.sock.send(message.encode())
-
+        self.sock.send(message.encode())

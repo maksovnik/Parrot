@@ -324,7 +324,6 @@ class Sidelist(ScrollableFrame):
         
         self.parent=parent
         self.contents=[]
-        self.scheme=itemlistColours
         self.names=[]
         self.clickable=clickable
 
@@ -407,15 +406,11 @@ class Sidelist(ScrollableFrame):
 
     def setColour(self,text):
         if text not in self.itemColours:
-            if self.scheme:
-                self.itemColours[text]=self.scheme[-1]
-                del self.scheme[-1]
-            else:
-                h,s,l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
-                r,g,b = [int(256*i) for i in colorsys.hls_to_rgb(h,l,s)]
-                colour= '#%02x%02x%02x' % (r,g,b)
-            
-                self.itemColours[text]=colour
+            h,s,l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
+            r,g,b = [int(256*i) for i in colorsys.hls_to_rgb(h,l,s)]
+            colour= '#%02x%02x%02x' % (r,g,b)
+        
+            self.itemColours[text]=colour
         
 class item(tk.Canvas):
     def __init__(self,parent,type='',text='',colour=None,height=0,*args,**kwargs):
@@ -491,7 +486,3 @@ class item(tk.Canvas):
 
         p={'type':'newGroup','name':self.text,'creator':self.parent.parent.connection.username,'datetime':datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         self.parent.parent.connection.sendPackage([p])
-
-        
-        
-        

@@ -1,2 +1,2 @@
-"../../python/pyt.exe" main.py
+python main.py
 exit

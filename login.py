@@ -89,7 +89,7 @@ class Login(tk.Frame):
             schoolID,username,password=[i.get() for i in self.forms]
             connection.connect(schoolID,username,password)
             
-            msg=connection.getResponse()
+            msg=connection.recvPackage()[0]
 
             if msg=='Logged In':
                 self.unbind_all('<Return>')

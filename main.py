@@ -101,9 +101,6 @@ class MainWindow(tk.Tk):
         elif event.widget==self.corner:
             self.geometry("%sx%s" % ((px-rx),(py-ry)))
 
-
-    
-    
     def setSize(self,w,h):
 
         ws = self.winfo_screenwidth()

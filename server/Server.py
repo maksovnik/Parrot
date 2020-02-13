@@ -49,7 +49,6 @@ class server:
             print('Server failed to start on port {}\nTry to restart and check port configuration'.format(self.address[1]))
             exit()
             
-
     def startAcceptingConnections(self):
         
         accept_thread = Thread(target=self.acceptConnections)
@@ -58,8 +57,8 @@ class server:
         
     def acceptConnections(self):
         while True:
-            client, client_address = self.sock.accept()
-            Thread(target=self.handleClient, args=(client,)).start()
+            client = self.sock.accept()[0]
+            Thread(target=Client, args=(self,client,)).start()
 
     def insertMessageToDB(self,package,school):
         message=package['message']
@@ -85,7 +84,6 @@ class server:
 
         self.cursor.execute(statement,(message,xTo,xFrom,school))
         self.db.commit()
-
 
     def recvPackage(self,client,encrypt=True):
         
@@ -117,15 +115,12 @@ class server:
             if encrypt:
                 before=message
                 message=self.ciphers[client].encrypt(self.pad(before).encode()).hex()
-                
-                
+
             if i==len(msgs)-1:
                 message=message+'END'
-
             else:
                 message=message+'/7/4534'
                 
-
             client.send(message.encode())
 
     def pad(self,s):
@@ -140,94 +135,6 @@ class server:
         l = dec.count('`')
         return dec[:len(dec)-l]
 
-
-   
-    def handleClient(self,client):
-        
-                
-        school = None
-        
-        private=random.randint(1,n)
-        
-        public=pow(G,private,n)
-        
-        self.sendPackage(client,[public],encrypt=False)
-        clientPublic=int(self.recvPackage(client,encrypt=False)[0]) #(g^a)%n
-        
-        commKey=pow(clientPublic,private,n)
-
-        commKey = HKDF(str(commKey).encode(), 32, None, SHA512, 1)
-        cipher=AES.new(commKey,AES.MODE_ECB)
-        self.ciphers[client]=cipher
-
-        
-        try:
-            msg=self.recvPackage(client)[0]
-            school,username,password= msg.split(',')
-            
-            sc,username=self.checkDB(client,school,username,password)
-
-            if self.isClientAlive(client):
-                while True:
-                    msgs=self.recvPackage(client)
-                    for msg in msgs:
-                        package=ast.literal_eval(msg)
-
-                        if package['type']=='message':
-                            self.insertMessageToDB(package,school)
-
-                            for i in self.schools[school]['clients']:
-                                    self.sendPackage(i,[msg])
-                                    
-                        if package['type']=='dmMessage':
-
-                            self.insertDMtoDB(package,school)
-                                
-                            for sock,info in self.schools[school]['clients'].items():
-                                if info['username'] in [package['from'],package['to']]:
-                                    self.sendPackage(sock,[package])
-                                    
-                        if package['type']=='fetch':
-                            if package['param']=='dm':
-                                requester=package['requester']
-                                asoc=package['asoc']
-                                dms=self.getDms(school,requester,asoc)
-                                for sock,info in self.schools[school]['clients'].items():
-                                    if info['username']==requester:
-                                        self.sendPackage(sock,dms)
-                                        
-                            if package['param']=='chatroom':
-                                chatroom=package['chatroom']
-                                if chatroom in self.schools[school]['chatrooms']:
-                                        
-                                    msgs=self.getMessages(school,self.getChatroomID(school,chatroom))
-                                    self.sendPackage(client,msgs)
-                                    
-                        if package['type']=='newGroup':
-                            name=package['name']
-                            creator=package['creator']
-                            self.makeGroup(name,creator)
-               
-        except ConnectionResetError:
-            if school !=None:
-            
-                del self.schools[school]['clients'][client]
-
-                address=':'.join(str(i) for i in client.getpeername())
-                info=['Disconnected',address,school,sc,username,password,str(datetime.datetime.now())[:-7]]
-                self.printRow(info) 
-
-                if self.schools[school]['clients']==[]:
-                    del self.schools[school]
-                client.close()
-
-                userlist=self.getOnlineUsers(school)
-                offline=self.getOfflineUsers(userlist,school)
-                userlist={'online':userlist,'offline':offline}
-            
-                for i in self.schools[school]['clients']:
-                    p={'userList':userlist,'type':'userList'}
-                    self.sendPackage(i,[p])
     
     def getDms(self,school,xFrom,xTo):
         statement="SELECT * FROM dms WHERE school=%s and (xFrom=%s and xTo=%s) OR (xFrom=%s and xTo=%s)"
@@ -237,12 +144,6 @@ class server:
         dms = [{'type':'dmMessage','message': row[0], 'from': row[1],'to':row[2],'datetime':str(row[4])} for row in records]
         return dms
     
-    def checkRole(self,user):
-        statement="SELECT role FROM users WHERE username=%s"
-        self.cursor.execute(statement,(user))
-        records = self.cursor.fetchall()
-        return records[0][0]
-        
     def isClientAlive(self,client):
         stat=client.fileno()
         if stat==-1:
@@ -256,70 +157,9 @@ class server:
         username='remote'
         password = 'remote'
         database = 'chat'
-        port='3306'
        
         self.db = mysql.connector.connect(host=hostname, user=username, passwd=password, db=database, port=3306)
         self.cursor = self.db.cursor()
-
-    def checkDB(self,client,schoolID,username,password):
-
-            
-        self.connectDb()
-        
-        schools=self.getSchoolMatches(schoolID)
-        address=':'.join(str(i) for i in client.getpeername())
-
-        if schools:
-        
-
-            school=schools[0][0]
-            users=self.getUserMatches(schoolID,username,password)
-            
-            if users:
-                username=users[0][0]
-                email = users[0][3]
-                valid = users[0][5]
-                date=users[0][6]
-                if valid:
-                    
-                    if schoolID not in self.schools:
-                        self.addSchool(schoolID)
-            
-                    users=[i['username'] for i in self.schools['ctk']['clients'].values()]
-                    if username not in users:
-                        status='Connected'
-                        self.sendPackage(client,['Logged In'])
-                        self.addClient(username,client,schoolID)
-                        
-                    else:
-                        status='alreadylogged'
-                        self.sendPackage(client,['User logged in from another location'])
-                        client.close()
-
-                else:
-                    status='notValid'
-                    msg="""This account had not yet been verified.
-                    An email was sent to {} on {}""".format(email,date)
-                    self.sendPackage(client,[msg])
-                    status='notVerified'
-                    client.close()
-
-            else:
-                status='badDetails'
-                self.sendPackage(client,['Incorrect details'])
-                client.close()
-            
-        else:
-            school='NA'
-            status='badSchool'
-            self.sendPackage(client,['School not Found'])
-            client.close()
-
-        self.addLog(status,address,schoolID,school,username)
-        info=[status,address,schoolID,school,username,password,str(datetime.datetime.now())[:-7]]
-        self.printRow(info)
-
-        return school,username
 
     def addLog(self,status,address,schoolID,schoolName,username):
 
@@ -422,16 +262,155 @@ class server:
         if records:
             return [i[0] for i in records]
 
-    def makeGroup(self,name,creator):
+class Client:
 
-        statement="""INSERT into groups
-            (name,creator)
-            VALUES (%s,%s)"""
+    def __init__(self,parent,client):
+        self.school = None
 
-        self.cursor.execute(statement,(name,creator))
-        self.db.commit()
+        self.parent=parent
+        self.client=client
 
+        self.diffieHelman()
+        try:
+            msg=self.parent.recvPackage(client)[0]
+            self.school,username,password= msg.split(',')
 
+            sc,username=self.checkDB(username,password)
+
+            if self.parent.isClientAlive(client):
+                while True:
+                    msgs=self.parent.recvPackage(client)
+                    for msg in msgs:
+                        package=ast.literal_eval(msg)
+
+                        if package['type']=='message':
+                            self.message(package)        
+                        if package['type']=='dmMessage':
+                            self.dmMessage(package)
+                        if package['type']=='fetch':
+                            self.fetch(package)
+
+        except ConnectionResetError:
+            if self.school !=None:
+            
+                del self.parent.schools[self.school]['clients'][client]
+
+                address=':'.join(str(i) for i in client.getpeername())
+                info=['Disconnected',address,self.school,sc,username,password,str(datetime.datetime.now())[:-7]]
+                self.parent.printRow(info) 
+
+                if self.parent.schools[self.school]['clients']==[]:
+                    del self.parent.schools[self.school]
+                client.close()
+
+                userlist=self.parent.getOnlineUsers(self.school)
+                offline=self.parent.getOfflineUsers(userlist,self.school)
+                userlist={'online':userlist,'offline':offline}
+            
+                for i in self.parent.schools[self.school]['clients']:
+                    p={'userList':userlist,'type':'userList'}
+                    self.parent.sendPackage(i,[p])
+
+    def checkDB(self,username,password):
+
+            
+        self.parent.connectDb()
         
+        schools=self.parent.getSchoolMatches(self.school)
+        address=':'.join(str(i) for i in self.client.getpeername())
+
+        if schools:
+        
+            school=schools[0][0]
+            users=self.parent.getUserMatches(self.school,username,password)
+            
+            if users:
+                username=users[0][0]
+                email = users[0][3]
+                valid = users[0][5]
+                date=users[0][6]
+                if valid:
+                    
+                    if self.school not in self.parent.schools:
+                        self.parent.addSchool(self.school)
+            
+                    users=[i['username'] for i in self.parent.schools['ctk']['clients'].values()]
+                    if username not in users:
+                        status='Connected'
+                        self.parent.sendPackage(self.client,['Logged In'])
+                        self.parent.addClient(username,self.client,self.school)
+                        
+                    else:
+                        status='alreadylogged'
+                        self.parent.sendPackage(self.client,['User logged in from another location'])
+                        self.client.close()
+
+                else:
+                    status='notValid'
+                    msg="""This account had not yet been verified.
+                    An email was sent to {} on {}""".format(email,date)
+                    self.parent.sendPackage(self.client,[msg])
+                    status='notVerified'
+                    self.client.close()
+
+            else:
+                status='badDetails'
+                self.parent.sendPackage(self.client,['Incorrect details'])
+                self.client.close()
+            
+        else:
+            school='NA'
+            status='badSchool'
+            self.parent.sendPackage(self.client,['School not Found'])
+            self.client.close()
+            
+        info=[status,address,self.school,school,username,password,str(datetime.datetime.now())[:-7]]
+        self.parent.printRow(info)
+
+        return school,username
+
+    def diffieHelman(self):
+        private=random.randint(1,n)
+        public=pow(G,private,n)
+        
+        self.parent.sendPackage(self.client,[public],encrypt=False)
+        clientPublic=int(self.parent.recvPackage(self.client,encrypt=False)[0]) #(g^a)%n
+        
+        commKey=pow(clientPublic,private,n)
+
+        commKey = HKDF(str(commKey).encode(), 32, None, SHA512, 1)
+        cipher=AES.new(commKey,AES.MODE_ECB)
+        self.parent.ciphers[self.client]=cipher
+        
+    def fetch(self,package):
+        
+        if package['param']=='dm':
+            requester=package['requester']
+            asoc=package['asoc']
+            dms=self.parent.getDms(self.school,requester,asoc)
+            for sock,info in self.parent.schools[self.school]['clients'].items():
+                if info['username']==requester:
+                    self.parent.sendPackage(sock,dms)
+                
+        if package['param']=='chatroom':
+            chatroom=package['chatroom']
+            if chatroom in self.parent.schools[self.school]['chatrooms']:
+                    
+                msgs=self.parent.getMessages(self.school,self.parent.getChatroomID(self.school,chatroom))
+                self.parent.sendPackage(self.client,msgs)
+
+    def message(self,package):
+        self.parent.insertMessageToDB(package,self.school)
+
+        for i in self.parent.schools[self.school]['clients']:
+                self.parent.sendPackage(i,[package])
+
+    def dmMessage(self,package):
+
+        self.parent.insertDMtoDB(package,self.school)
+            
+        for sock,info in self.parent.schools[self.school]['clients'].items():
+            if info['username'] in [package['from'],package['to']]:
+                self.parent.sendPackage(sock,[package])
 s=server()
 
