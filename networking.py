@@ -57,8 +57,9 @@ class Connection:
         self.private=random.randint(1,n)
 
         self.public=pow(G,self.private,n)
+        
         self.sendPackage([str(self.public)],encrypt=False)
-
+                
         self.serverPublic=int(self.recvPackage(encrypt=False)[0])
 
         key=pow(self.serverPublic,self.private,n)
@@ -85,12 +86,16 @@ class Connection:
             
 
     def onClose(self):
-        try:
-            self.sock.close()
-        except:
-            pass
-        
+        self.sendPackage([{'type':'quit'}])
         self.parent.destroy()
+        #try:
+            #self.sock.send([{'type','quit'}])
+            #self.sock.close()
+            
+       # except:
+            #pass
+        
+        #self.parent.destroy()
 
 
     def recvPackage(self,encrypt=True):
@@ -122,7 +127,7 @@ class Connection:
             before=message
             
             message=self.encrypt(message)
-            print(('\nEncrypted Message ({}):\n').format(before),message)
+            #print(('\nEncrypted Message ({}):\n').format(before),message)
         
         message=message+'END'
 

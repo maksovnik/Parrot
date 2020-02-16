@@ -1,2 +1,2 @@
 python main.py
-exit
+pause

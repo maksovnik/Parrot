@@ -75,9 +75,11 @@ class Chat(tk.Frame):
 
             colour=self.userList.itemColours[user]
             self.roomList.addItem(user,type='dm',colour=colour)
+            self.roomList.contents[-1].isInitalized=True
             self.roomList.select(item=self.roomList.contents[-1])
             self.roomList.checkScroll()
             self.roomList.canvas.yview_moveto(1)
+            
             
             self.chatrooms[user].grid(column=2,row=1,sticky='nsew')
             
@@ -130,6 +132,7 @@ class Chat(tk.Frame):
             for msg in msgs:
 
                 package=ast.literal_eval(msg)
+
                 self.handlePackage(package)
 
         self.after(10,self.checkMessages)
@@ -161,6 +164,8 @@ class Chat(tk.Frame):
             datetime=package['datetime']
             message=package['message']
             myUser=self.parent.connection.username
+
+            
             
             if to==myUser:
                 self.dm(xfrom)
