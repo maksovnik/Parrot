@@ -37,10 +37,10 @@ class Server:
         self.connectDB()
 
         self.allschools=self.getStatement('SELECT * FROM schools')
-        print(self.allschools)
+
         for i in self.allschools:
             self.schools.append(School(i[0],i[1]))
-            print(i[0],i[1])
+
 
         accept_thread = Thread(target=self.acceptConnections)
         accept_thread.start()
@@ -54,6 +54,10 @@ class Server:
             client.daemon=True
             client.start()
             sock.close()
+
+    def insertStatement(self,statement,*args):
+        self.cursor.execute(statement,(args))
+        self.db.commit()
 
     def getStatement(self,statement,*args):
         self.cursor.execute(statement,(args))
@@ -69,13 +73,14 @@ class Client(socket.socket):
         super(Client, self).__init__(*args, **kwargs)
         self.parent=parent
         self.encryptChannel()
+        address=':'.join(str(i) for i in self.getpeername())
 
         self.schoolID,self.username,password=self.recieveX()[0].split(',')
         self.username=self.username.title()
         
-        self.schoolName=self.parent.getStatement('SELECT * FROM schools WHERE id=%s',self.schoolID)[0]
-        status=self.checkDetails(self.schoolID,self.username,password)
+        self.schoolName=self.parent.getStatement('SELECT name FROM schools WHERE id=%s',self.schoolID)[0][0]
 
+        status=self.checkDetails(self.schoolID,self.username,password)
         if status:
 
             self.sendX(['Logged In'])
@@ -100,6 +105,10 @@ class Client(socket.socket):
             self.sendX(['Nope'])
             self.close()
 
+        self.parent.insertStatement("""INSERT into connections
+            (status,address,schoolID,schoolName,username)
+            VALUES (%s,%s,%s,%s,%s)""",status,address,self.schoolID,self.schoolName,self.username)
+
     def getUserList(self):
         online=[i.username for i in self.school.clients]
         allUsers=self.parent.getStatement("SELECT username FROM users WHERE school=%s",self.school.ID)
@@ -110,6 +119,7 @@ class Client(socket.socket):
     
     def makeChatrooms(self):
         self.chatrooms=[[i[0],i[2]] for i in self.parent.getStatement("SELECT * FROM chatrooms WHERE school=%s",self.school.ID)]
+        print(self.chatrooms)
         for i in self.chatrooms:
             self.school.chatrooms.append(Chatroom(i[0],i[1]))
 
@@ -132,10 +142,17 @@ class Client(socket.socket):
                     for i in others:
                         i.sendX([justUsers])
                     self.close()
-                    return   
-                    
+                    return        
 
     def message(self,package):
+        #message=package['message']
+        #chatroom=package['chatroom']
+        #sender=package['sender']
+        #self.parent.insertStatement("""INSERT into messages
+                    #(message,sender,school,chatroom)
+                    #VALUES (%s,%s,%s,%s)""",message,sender,self.schoolID)
+
+                    
         for i in self.school.clients:
             i.sendX([package])
         
