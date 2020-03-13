@@ -29,6 +29,7 @@ public=pow(G,private,n)
 
 class Server:
     def __init__(self):
+        print('----------------I AM THE SERVER----------------\n')
         self.schools=[]
         self.sock = socket.socket()
         self.sock.bind(address)
@@ -40,7 +41,6 @@ class Server:
 
         for i in self.allschools:
             self.schools.append(School(i[0],i[1]))
-
 
         accept_thread = Thread(target=self.acceptConnections)
         accept_thread.start()
@@ -78,36 +78,47 @@ class Client(socket.socket):
         self.schoolID,self.username,password=self.recieveX()[0].split(',')
         self.username=self.username.title()
         
-        self.schoolName=self.parent.getStatement('SELECT name FROM schools WHERE id=%s',self.schoolID)[0][0]
+        self.schoolName=self.parent.getStatement('SELECT name FROM schools WHERE id=%s',self.schoolID)
 
-        status=self.checkDetails(self.schoolID,self.username,password)
-        if status:
+        if self.schoolName:
+            self.schoolName=self.schoolName[0][0]
+            status=self.checkDetails(self.schoolID,self.username,password)
 
-            self.sendX(['Logged In'])
-            self.school = [i for i in self.parent.schools if i.ID==self.schoolID][0]
-            self.school.clients.append(self)
+            if status:
+                self.sendX(['Logged In'])
+                self.school = [i for i in self.parent.schools if i.ID==self.schoolID][0]
+                self.school.clients.append(self)
 
-            userList=self.getUserList()
+                userList=self.getUserList()
 
-            self.makeChatrooms()
+                self.makeChatrooms()
+                
+                welcome={'userList':userList,'roomList':[i[0] for i in self.chatrooms],'type':'room+users'}
+                justUsers={'userList':userList,'type':'userList'}
+
+                others=[i for i in self.school.clients if i!=self]
+                for i in others:
+                    i.sendX([justUsers])
+
+                self.sendX([welcome])
+                self.messageLoop()
+
+            else:
+                self.sendX(['Incorrect details'])
+                status=0
+                self.close()
             
-            welcome={'userList':userList,'roomList':[i[0] for i in self.chatrooms],'type':'room+users'}
-            justUsers={'userList':userList,'type':'userList'}
-
-            others=[i for i in self.school.clients if i!=self]
-            for i in others:
-                i.sendX([justUsers])
-
-            self.sendX([welcome])
-            self.messageLoop()
-
         else:
-            self.sendX(['Nope'])
+            status=0
+            self.schoolName='badSchool'
+
+            self.sendX(['School not found'])
             self.close()
 
         self.parent.insertStatement("""INSERT into connections
-            (status,address,schoolID,schoolName,username)
-            VALUES (%s,%s,%s,%s,%s)""",status,address,self.schoolID,self.schoolName,self.username)
+        (status,address,schoolID,schoolName,username)
+         VALUES (%s,%s,%s,%s,%s)""",status,address,self.schoolID,self.schoolName,self.username)
+        
 
     def getUserList(self):
         online=[i.username for i in self.school.clients]
@@ -119,7 +130,6 @@ class Client(socket.socket):
     
     def makeChatrooms(self):
         self.chatrooms=[[i[0],i[2]] for i in self.parent.getStatement("SELECT * FROM chatrooms WHERE school=%s",self.school.ID)]
-        print(self.chatrooms)
         for i in self.chatrooms:
             self.school.chatrooms.append(Chatroom(i[0],i[1]))
 
@@ -197,8 +207,10 @@ class Client(socket.socket):
             else: return 0
                 
     def encryptChannel(self):
+        
         self.sendX([public],encrypt=False)
         self.public=int(self.recieveX(encrypt=False)[0])
+
         key=pow(self.public,private,n)
         commKey = HKDF(str(key).encode(), 32, None, SHA512, 1)
         self.cipher=Cipher(commKey)

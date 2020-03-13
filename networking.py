@@ -12,7 +12,7 @@ from Crypto.Hash import SHA512
 class Connection:
     
     def __init__(self,parent):
-        
+        print('----------------I AM THE CLIENT----------------\n')
         self.parent=parent
         self.host=host
         self.queue = queue.Queue()
@@ -55,18 +55,23 @@ class Connection:
 
     def diffieHelman(self):
         self.private=random.randint(1,n)
-
+        
         self.public=pow(G,self.private,n)
         
         self.sendPackage([str(self.public)],encrypt=False)
                 
         self.serverPublic=int(self.recvPackage(encrypt=False)[0])
+        
 
         key=pow(self.serverPublic,self.private,n)
 
         
         key=HKDF(str(key).encode(), 32, None, SHA512, 1)
-        print('\nSecret Comm Key:\n',key.hex(),'\n')
+        print('Client private key is:',hex(self.private))
+        print('\nClient public key is:',hex(self.public))
+        print('\nRecieved server key is:',hex(self.serverPublic))
+        print('\nSecret Comm Key:',key.hex())
+        print('\nEncryption Channel Established!!')
 
         self.cipher=AES.new(key,AES.MODE_ECB)
     

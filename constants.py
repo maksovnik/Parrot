@@ -4,7 +4,7 @@ WS_EX_APPWINDOW=0x00040000
 WS_EX_TOOLWINDOW=0x00000080
 
 loginWidth=700
-loginHeight=620
+loginHeight=500
 
 leftBarSize=300
 rightBarSize=225
@@ -28,7 +28,7 @@ colours={'sides':'#302C33',
          'scrollbarDark':'#383838',
          'scrollbarLight':'#383838',
          'scrollbarArrow':'#4f4f4f',
-         'loginInner':'#363941',
+         'loginInner':'#302C33',
          'fg':'#ffffff',
          'leftSideFG':'#ffffff',
          'rightSideFG':'#ffffff'}

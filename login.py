@@ -4,6 +4,7 @@ import socket
 from chat import Chat
 from constants import *
 import time
+import webbrowser
 
 class Login(tk.Frame):
     
@@ -20,26 +21,26 @@ class Login(tk.Frame):
     def makeInner(self):
 
         self.inner=tk.Frame(self,bg=colours['loginInner'])
-        self.makeWidgets(self.inner)
-        self.inner.grid(column=1,row=1)
+        self.makeWidgets()
 
-    def makeEntry(self,widget=None,column=None,row=None,text=None,pady=10):
 
-        l=tk.Label(widget,text=text,bg=colours['loginInner'],fg='#8a8e93')
-        e=ttk.Entry(widget,justify='left',width=30,style='login.TEntry')
+    def makeEntry(self,show='',column=None,row=None,text=None):
+
+        l=tk.Label(self,text=text,bg=colours['loginInner'],fg='#8a8e93')
+        e=ttk.Entry(self,justify='left',width=30,style='login.TEntry',show=show)
         self.forms.append(e)
 
-        l.grid(column=column,row=row,sticky='w',padx=55,pady=pady)
-        e.grid(column=column,row=row+1,sticky='we',padx=55)
+        l.grid(column=1,row=row,sticky='w')
+        e.grid(column=2,row=row,sticky='we')
   
         
-    def makeWidgets(self,widget):
+    def makeWidgets(self):
 
         self.bind_all('<Return>',self.onSubmit)
-        self.banner=tk.Label(widget,bg=colours['loginInner'])
+        self.banner=tk.Label(self,bg=colours['loginInner'])
         self.applyImage(self.banner,img=banner)
         
-        self.submit = tk.Button(widget,text='Submit',
+        self.submit = tk.Button(self,text='Login',
                                 command=self.onSubmit,
                                 highlightthickness = 0,
                                 relief='flat',
@@ -50,13 +51,18 @@ class Login(tk.Frame):
                                 font='Arial 20 bold',
                                 activebackground='#7289D9',
                                 activeforeground=colours['fg'])
+
+
+        self.makeEntry(text='School ID:',row=2)
+        self.makeEntry(text='Username:',row=3)
+        self.makeEntry(text='Password:',show='*',row=4)
         
-        self.makeEntry(widget,text='School ID',column=1,row=3,pady=(0,10))
-        self.makeEntry(widget,text='Username',column=1,row=5)
+        self.signup=tk.Label(self,bg=colours['loginInner'],fg=colours['fg'],text='Sign Up')
+        self.signup.bind("<Button-1>", lambda e: webbrowser.open_new("https://parrotchat.co.uk/ac/register.php"))
 
-        self.makeEntry(widget,text='Password',column=1,row=7)
+        self.error = tk.Label(self,bg=colours['loginInner'],fg=colours['fg'],font='Arial 10 bold')
 
-        self.error = tk.Label(widget,bg=colours['loginInner'],fg=colours['fg'])
+        
 
         self.debug()
         
@@ -73,15 +79,17 @@ class Login(tk.Frame):
         
     def gridWidgets(self):
 
-        self.banner.grid(column=1,row=2,padx=20,pady=20)
-        self.submit.grid(column=1,row=9,pady=(20,0))
-        self.error.grid(column=1,row=10)
-
-        self.grid_columnconfigure(0,weight=1)
-        self.grid_columnconfigure(2,weight=1)
+        self.banner.grid(column=1,row=1,columnspan=2,pady=(0,10))
+        self.submit.grid(column=1,row=9,pady=(20,0),columnspan=2)
+        self.error.grid(column=1,row=11,columnspan=2)
+        self.signup.grid(column=1,row=12,columnspan=2)
         
-        self.grid_rowconfigure(1,weight=1)
-        self.grid_rowconfigure(3,weight=1)
+
+        self.grid_rowconfigure(0,weight=1)
+        self.grid_rowconfigure(50,weight=1)
+        self.grid_columnconfigure(0,weight=1)
+        self.grid_columnconfigure(50,weight=1)
+
 
     def onSubmit(self,event=None):
         try:

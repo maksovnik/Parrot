@@ -31,9 +31,12 @@ class Bar(tk.Frame):
         return result
 
     def onClose(self):
-        if hasattr(self.parent,'connection'):
-            self.parent.connection.onClose()
-        else:        
+        try:
+            if hasattr(self.parent,'connection'):
+                self.parent.connection.onClose()
+            else:        
+                self.parent.destroy()
+        except:
             self.parent.destroy()
         
     def makeIcon(self):
