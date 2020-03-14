@@ -1,4 +1,3 @@
-
 GWL_EXSTYLE=-20
 WS_EX_APPWINDOW=0x00040000
 WS_EX_TOOLWINDOW=0x00000080
@@ -33,8 +32,6 @@ colours={'sides':'#302C33',
          'leftSideFG':'#ffffff',
          'rightSideFG':'#ffffff'}
 
-
-#itemlistColours=['#E0E76B','#2CB1A8','#51307A','#20A9B3','#f5ad42','#61dfed']
 itemlistColours=[]
 
 G=2

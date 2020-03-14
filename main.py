@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from ctypes import windll
 from tkinter import messagebox
-import time
 from networking import Connection
 from login import Login
 from topbar import Bar
@@ -31,7 +30,6 @@ class MainWindow(tk.Tk):
         style=ttk.Style()
         style.theme_use('clam')
 
-        
         style.configure("Vertical.TScrollbar", gripcount=0,
                         background=colours['sides'],
                         darkcolor=colours['scrollbarDark'],
@@ -51,13 +49,10 @@ class MainWindow(tk.Tk):
     def makeWidgets(self):
         
         self.bar=Bar(self)
-
         self.login=Login(self,bg=colours['sides'])
-
         self.corner=self.makeBorder(cursor='size_nw_se')
         self.bottom=self.makeBorder(cursor='sb_v_double_arrow')
         self.right=self.makeBorder(cursor='sb_h_double_arrow')
-
         self.borders=[self.right,self.bottom,self.corner]
 
     def makeBorder(self,cursor='',command=None):
@@ -70,9 +65,7 @@ class MainWindow(tk.Tk):
         
         self.bar.grid(column=1,row=1,sticky='we',columnspan=2)
         self.login.grid(column=1,row=2,sticky='nsew')
-        
         self.bottom.grid(column=1,row=3,sticky='we')
-        
         self.right.grid(column=2,row=2,sticky='nse')
         self.corner.grid(column=2,row=3,sticky='nsew')
 
@@ -102,13 +95,10 @@ class MainWindow(tk.Tk):
             self.geometry("%sx%s" % ((px-rx),(py-ry)))
 
     def setSize(self,w,h):
-
         ws = self.winfo_screenwidth()
         hs = self.winfo_screenheight()
-
         x = (ws/2) - (int(w)/2)
         y = (hs/2) - (int(h)/2)
-
         self.geometry('%dx%d+%d+%d' % (int(w), int(h), x, y))
 
 root=MainWindow()

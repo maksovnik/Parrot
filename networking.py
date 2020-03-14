@@ -28,11 +28,9 @@ class Connection:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(2)
         self.sock.connect(self.ADDR)
-
         self.sock.settimeout(None)
         
         self.diffieHelman()
-
         self.sendPackage([schoolID+','+username+','+password])
 
 
@@ -41,13 +39,11 @@ class Connection:
 
     def encrypt(self,plaintext):
         b=self.cipher.encrypt(self.pad(plaintext).encode())
-    
         return b.hex()
 
     def decrypt(self,ciphertext):
         
         ciphertext=bytes(bytearray.fromhex(ciphertext))
-        
         dec = self.cipher.decrypt(ciphertext)
         dec=dec.decode('utf-8')
         l = dec.count('`')
@@ -55,18 +51,13 @@ class Connection:
 
     def diffieHelman(self):
         self.private=random.randint(1,n)
-        
         self.public=pow(G,self.private,n)
-        
         self.sendPackage([str(self.public)],encrypt=False)
-                
-        self.serverPublic=int(self.recvPackage(encrypt=False)[0])
-        
-
+        self.serverPublic=int(self.recvPackage(encrypted=False)[0])
+    
         key=pow(self.serverPublic,self.private,n)
-
-        
         key=HKDF(str(key).encode(), 32, None, SHA512, 1)
+        
         print('Client private key is:',hex(self.private))
         print('\nClient public key is:',hex(self.public))
         print('\nRecieved server key is:',hex(self.serverPublic))
@@ -88,51 +79,37 @@ class Connection:
                 
         except (ConnectionResetError,ConnectionAbortedError):
             pass
-            
 
     def onClose(self):
         self.sendPackage([{'type':'quit'}])
         self.parent.destroy()
-        #try:
-            #self.sock.send([{'type','quit'}])
-            #self.sock.close()
-            
-       # except:
-            #pass
-        
-        #self.parent.destroy()
 
-
-    def recvPackage(self,encrypt=True):
+    def recvPackage(self,encrypted=True):
         
-        string=''
-        while True:
-            msg=self.sock.recv(self.BUFSIZ).decode()
+        string='' #declares an empty string
+        while True: #runs forever
+            msg=self.sock.recv(self.BUFSIZ).decode() #waits until message recieved
                  
-            string+=msg
+            string+=msg #concatenates the message to string
             if string[-3:]=='END':
-                break
+                break #breaks the loop if message end is reached
             
-        x = string[:-3]
-        x=x.split('/7/4534')
-        x=[i.split('END') for i in x ]
-        x=sum(x, [])
+        x = string[:-3] #cuts the end character from string
+        x=x.split('/7/4534') #seperates messages
+        x=[i.split('END') for i in x ] #puts messages in list
+        x=sum(x, []) #converts 2d list to 1d list
         
-        if encrypt:
+        if encrypted: #if decryption is required the messages are decrypted
             x=[self.decrypt(i) for i in x]
 
-        return x
-
+        return x #returns list of messages
 
     def sendPackage(self,msgs,encrypt=True):
 
         message=str(msgs[0])
         
         if encrypt:
-            before=message
-            
             message=self.encrypt(message)
-            #print(('\nEncrypted Message ({}):\n').format(before),message)
         
         message=message+'END'
 

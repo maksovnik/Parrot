@@ -1,6 +1,4 @@
 color 7
-
-
 echo off
 
 title Parrot - CLIENT

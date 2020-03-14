@@ -125,16 +125,14 @@ class Chat(tk.Frame):
                     event.widget.parent.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def checkMessages(self):
-        
         if not self.connection.queue.empty():
+
             msgs = self.connection.queue.get_nowait()
             
             for msg in msgs:
-
                 package=ast.literal_eval(msg)
-
                 self.handlePackage(package)
-
+                
         self.after(10,self.checkMessages)
 
     def handlePackage(self,package):

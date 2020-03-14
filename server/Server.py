@@ -2,8 +2,6 @@ import socket
 from threading import Thread
 import mysql.connector
 import ast
-import time
-import datetime
 import random
 
 from Crypto.Cipher._mode_ecb import EcbMode
@@ -29,12 +27,12 @@ public=pow(G,private,n)
 
 class Server:
     def __init__(self):
-        print('----------------I AM THE SERVER----------------\n')
         self.schools=[]
         self.sock = socket.socket()
         self.sock.bind(address)
         self.sock.listen(5)
 
+        
         self.connectDB()
 
         self.allschools=self.getStatement('SELECT * FROM schools')
@@ -42,6 +40,7 @@ class Server:
         for i in self.allschools:
             self.schools.append(School(i[0],i[1]))
 
+        print('Server running - waiting for connections')
         accept_thread = Thread(target=self.acceptConnections)
         accept_thread.start()
         accept_thread.join()
@@ -74,6 +73,7 @@ class Client(socket.socket):
         self.parent=parent
         self.encryptChannel()
         address=':'.join(str(i) for i in self.getpeername())
+        print('Connection from',address)
 
         self.schoolID,self.username,password=self.recieveX()[0].split(',')
         self.username=self.username.title()
@@ -119,7 +119,6 @@ class Client(socket.socket):
         (status,address,schoolID,schoolName,username)
          VALUES (%s,%s,%s,%s,%s)""",status,address,self.schoolID,self.schoolName,self.username)
         
-
     def getUserList(self):
         online=[i.username for i in self.school.clients]
         allUsers=self.parent.getStatement("SELECT username FROM users WHERE school=%s",self.school.ID)
@@ -127,7 +126,6 @@ class Client(socket.socket):
         userList={'online':online,'offline':offline}
         return userList
 
-    
     def makeChatrooms(self):
         self.chatrooms=[[i[0],i[2]] for i in self.parent.getStatement("SELECT * FROM chatrooms WHERE school=%s",self.school.ID)]
         for i in self.chatrooms:
@@ -152,17 +150,20 @@ class Client(socket.socket):
                     for i in others:
                         i.sendX([justUsers])
                     self.close()
-                    return        
+                    return
+
 
     def message(self,package):
-        #message=package['message']
-        #chatroom=package['chatroom']
-        #sender=package['sender']
-        #self.parent.insertStatement("""INSERT into messages
-                    #(message,sender,school,chatroom)
-                    #VALUES (%s,%s,%s,%s)""",message,sender,self.schoolID)
-
-                    
+        message=package['message']
+        chatroom=package['chatroom']
+        chatroom=self.parent.getStatement("SELECT id FROM chatrooms WHERE name=%s and school=%s",chatroom,self.schoolID)[0][0]
+        
+        sender=package['sender']
+        print(message,sender,self.schoolID,chatroom)
+        self.parent.insertStatement("""INSERT into messages
+                    (message,sender,school,chatroom,display)
+                    VALUES (%s,%s,%s,%s,1)""",message,sender,self.schoolID,chatroom)
+        
         for i in self.school.clients:
             i.sendX([package])
         
@@ -209,7 +210,7 @@ class Client(socket.socket):
     def encryptChannel(self):
         
         self.sendX([public],encrypt=False)
-        self.public=int(self.recieveX(encrypt=False)[0])
+        self.public=int(self.recieveX(encrypted=False)[0])
 
         key=pow(self.public,private,n)
         commKey = HKDF(str(key).encode(), 32, None, SHA512, 1)
@@ -222,7 +223,6 @@ class Client(socket.socket):
             
             if encrypt:
                 message=self.cipher.encryptX(message)
-
             if i==len(msgs)-1:
                 message=message+'END'
             else:
@@ -230,7 +230,7 @@ class Client(socket.socket):
                 
             self.send(message.encode())
 
-    def recieveX(self,encrypt=True):
+    def recieveX(self,encrypted=True):
         
         string=''
 
@@ -245,7 +245,7 @@ class Client(socket.socket):
         x=[i.split('END') for i in x ]
         x=sum(x, [])
 
-        if encrypt:
+        if encrypted:
             x=[self.cipher.decryptX(i) for i in x]
         
         return x
@@ -262,9 +262,7 @@ class Cipher(EcbMode):
         return encrypted
 
     def decryptX(self,ciphertext):
-        
         ciphertext=bytes(bytearray.fromhex(ciphertext))
-        
         dec = self.obj.decrypt(ciphertext)
         dec=dec.decode('utf-8')
         l = dec.count('`')
@@ -281,6 +279,5 @@ class Chatroom:
     def __init__(self,name,ID):
         self.name=name
         self.ID=ID
-
 
 Server()
