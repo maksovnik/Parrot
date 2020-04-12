@@ -37,8 +37,7 @@ class AutoScrollbar(ttk.Scrollbar):
         self.active=False
     def grid(self,*args,**kwargs):
         ttk.Scrollbar.grid(self,*args,**kwargs)
-        self.active=True
-        
+        self.active=True   
     def set(self, lo, hi):
         if float(lo) <= 0.0 and float(hi) >= 1.0:
             self.grid_remove()

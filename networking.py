@@ -67,18 +67,18 @@ class Connection:
         self.cipher=AES.new(key,AES.MODE_ECB)
     
     def startRecvThread(self):
-        self.receive_thread = Thread(target=self.recieve)
-        self.receive_thread.daemon=True
-        self.receive_thread.start()
+        self.receive_thread = Thread(target=self.recieve) #Creates the recieve Thread
+        self.receive_thread.daemon=True # Makes the Thread a daemon
+        self.receive_thread.start() #Starts the thread
 
     def recieve(self):
         try:
-            while True:
-                msg = self.recvPackage()
-                self.queue.put(msg)
+            while True: # Runs forever
+                msg = self.recvPackage() #Halts until message is recieved
+                self.queue.put(msg) #Puts the message into the queue
                 
         except (ConnectionResetError,ConnectionAbortedError):
-            pass
+            pass #Breaks if a Connection error occurs
 
     def onClose(self):
         self.sendPackage([{'type':'quit'}])

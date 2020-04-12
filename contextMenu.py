@@ -16,7 +16,6 @@ class ContextMenu(tk.Frame):
         self.bind('<Button-3>',self.remove)
 
     def remove(self,event=None,**kwargs):
-        
         if 'command' in kwargs:
             command=kwargs['command']
             del kwargs['command']
@@ -41,7 +40,6 @@ class ContextMenu(tk.Frame):
 class HoverButton(tk.Button):
     def __init__(self, master, **kw):
         tk.Button.__init__(self,master=master,**kw)
-
         self.parent=master
         self.defaultBackground = self["background"]
         self.bind("<Enter>", self.on_enter)

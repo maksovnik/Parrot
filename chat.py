@@ -6,9 +6,14 @@ import ast
 import random
 import time
 import colorsys
+import pyttsx3
+from queue import Queue
+from threading import Thread
 
 from sframe import ScrollableFrame,AutoScrollbar
 from contextMenu import ContextMenu,HoverButton
+
+
 
 
 class Chat(tk.Frame):
@@ -18,7 +23,9 @@ class Chat(tk.Frame):
         tk.Frame.__init__(self, parent,bg=colours['sides'])
         self.parent=parent
         self.connection=connection
-        
+
+        self.startSoundThread()
+
         self.checkMessages()
 
         self.parent.login.destroy()
@@ -28,7 +35,21 @@ class Chat(tk.Frame):
         self.parent.bind_all('<MouseWheel>',self.onMousewheel)
 
         self.bind_all('<Button-3>',self.queryItems)
-        
+    
+    def startSoundThread(self):
+        self.say=Queue() #defines a queue
+        t = Thread(target=self.sayLoop) #creates a thread for TTS
+        t.daemon = True #makes sure the thread close upon program close
+        t.start() #starts the thread
+
+    def sayLoop(self):
+        engine = pyttsx3.init() #initilises tts engine
+        while True: #runs forever
+            message=self.say.get() #halts until new item in queue
+            engine.say(message) #says message
+            engine.runAndWait() #processes message
+            self.say.task_done() #finishes queue job
+
     def queryItems(self,event=None):
 
         widget=event.widget
@@ -38,6 +59,9 @@ class Chat(tk.Frame):
             sender=self.getTextFromEvent(event,'sender')
             message=self.getTextFromEvent(event,'message')
             context.add(text='Report Bullying',command=self.report,sender=sender,message=message)
+            print(message)
+            if message:
+                context.add(text='Say Message',command=self.tts,message=message)
             
             if sender:
                 context.add(text='Message User',command=self.dm,user=sender)
@@ -51,6 +75,7 @@ class Chat(tk.Frame):
             if widget.parent == self.roomList:
                 context=self.spawnContext(event)
                 context.add(text='Enter Room',command=widget.parent.select,item=widget)
+                context.add(text='Create Room',command=self.createRoom)
             elif widget.parent == self.userList:
                 context=self.spawnContext(event)
                 context.add(text='Message User',command=self.dm,user=widget.text)
@@ -60,8 +85,11 @@ class Chat(tk.Frame):
             context.add(text='Create Room',command=self.createRoom)
     
     def createRoom(self):
-        item=self.roomList.addItem()
+        item=self.roomList.addItem(colour='#'+(''.join([random.choice('0123456789ABCDEF') for x in range(6)])))
         item.inpName()
+
+    def tts(self,message):
+        self.say.put(message)
 
     def report(self,sender,message):
         print(sender,message)
@@ -125,15 +153,15 @@ class Chat(tk.Frame):
                     event.widget.parent.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def checkMessages(self):
-        if not self.connection.queue.empty():
+        if not self.connection.queue.empty():#checks if queue is empty
 
-            msgs = self.connection.queue.get_nowait()
-            
-            for msg in msgs:
-                package=ast.literal_eval(msg)
-                self.handlePackage(package)
+            msgs = self.connection.queue.get_nowait() #gets messages from queue
+
+            for msg in msgs: #loops through messages
+                package=ast.literal_eval(msg) #interprets each message
+                self.handlePackage(package) #handles the package
                 
-        self.after(10,self.checkMessages)
+        self.after(10,self.checkMessages) #checks for more messages 10 ms later
 
     def handlePackage(self,package):
         if package['type']=='room+users':
@@ -147,6 +175,17 @@ class Chat(tk.Frame):
         if package['type'] == 'userList':
             self.users=package['userList']
             self.userList.fill(self.users)
+
+        if package['type'] == 'roomList':
+            self.rooms=package['roomList']
+            self.roomList.fill(self.rooms,select=True)
+
+            for i in self.rooms:
+                if i not in self.chatrooms.keys():
+                    self.currentRoom
+                    self.chatrooms[i]=Center(self,bg=colours['center'])
+                    self.chatrooms[i].grid(column=2,row=1,sticky='nsew')
+            self.chatrooms[self.currentRoom].tkraise()
 
         elif package['type']=='message':
             message=package['message']
@@ -162,14 +201,10 @@ class Chat(tk.Frame):
             datetime=package['datetime']
             message=package['message']
             myUser=self.parent.connection.username
-
-            
-            
             if to==myUser:
                 self.dm(xfrom)
                 self.chatrooms[xfrom].addMessage(xfrom,datetime,message)
             if xfrom == myUser:
-
                 self.chatrooms[to].addMessage(myUser,datetime,message)
 
     def createRooms(self,rooms):
@@ -261,7 +296,7 @@ class Center(tk.Frame):
         elif ob.date()==((today-timedelta(1)).date()):
             return "Yesterday at "+str(ob.strftime("%H:%M"))
         else:
-            return str(ob.strftime("%d/%m/%Y"))
+            return str(ob.strftime("%d/%m/%Y at %H:%M"))
 
     def gridWidgets(self):
         
@@ -312,7 +347,7 @@ class Center(tk.Frame):
                 p={'type':'dmMessage','to':self.parent.currentRoom,'message':text[:2000],'from':self.parent.connection.username,
                    'datetime':datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             elif self.type=='group':
-                p={'type':'groupMessage','chatroom':self.parent.currentRoom,'message':text[:2000],'sender':self.parent.connection.username,
+                p={'type':'message','chatroom':self.parent.currentRoom,'message':text[:2000],'sender':self.parent.connection.username,
                    'datetime':datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
             else:
                 p={'type':'message','chatroom':self.parent.currentRoom,'message':text[:2000],'sender':self.parent.connection.username,
@@ -365,9 +400,7 @@ class Sidelist(ScrollableFrame):
         if not select:
             offline=items['offline']
             items=items['online']
-            
-            
-            
+                    
         left=[i for i in self.contents if i.text not in items]
         joined=[i for i in items if i not in [n.text for n in self.contents]]
         
@@ -423,15 +456,12 @@ class item(tk.Canvas):
         width=self.parent.cget('width')
         self.config(width=width)
 
-        
         self.isInitalized=False
         self.text=text
         self.width=width
         self.height=height
         self.type=type
-        
 
-        
         if not colour:
             self.parent.setColour(text)
             self.colour=self.parent.itemColours[text]
@@ -471,19 +501,19 @@ class item(tk.Canvas):
 
 
     def inpName(self):
+
         self.box=tk.Entry(self)
         self.bid=self.create_window(165,30,window=self.box)
         self.box.bind('<Return>',self.enter)
+        self.parent.checkScroll()
+        self.parent.canvas.yview_moveto(1)
 
     def enter(self,event=None):
-        self.text=self.box.get()
+        self.text=self.box.get().title()
         self.delete(self.bid)
         self.delete(self.ctid)
         self.normalCreation()
         self.parent.parent.chatrooms[self.text]=Center(self.parent.parent,bg=colours['center'],type='group')
-
-        self.parent.checkScroll()
-        self.parent.canvas.yview_moveto(1)
 
         self.parent.parent.chatrooms[self.text].grid(column=2,row=1,sticky='nsew')
 

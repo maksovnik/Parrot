@@ -3,12 +3,10 @@ from threading import Thread
 import mysql.connector
 import ast
 import random
-
-from Crypto.Cipher._mode_ecb import EcbMode
 from Crypto.Cipher import AES
 from Crypto.Protocol import HKDF
 from Crypto.Hash import SHA512
-
+import datetime
 import bcrypt
 
 G=2
@@ -40,19 +38,19 @@ class Server:
         for i in self.allschools:
             self.schools.append(School(i[0],i[1]))
 
-        print('Server running - waiting for connections')
-        accept_thread = Thread(target=self.acceptConnections)
-        accept_thread.start()
-        accept_thread.join()
+        print('PARROT Server running - waiting for connections')
+        self.printRow(['Status','IP','SchoolID','Username','Datetime','Encrypted?'])
+        accept_thread = Thread(target=self.acceptConnections) #Creates accept Thread
+        accept_thread.start() #Starts Thread
 
     def acceptConnections(self):
         while True:
-            sock=self.sock.accept()[0]
-            copy = socket.dup(sock.fileno())
-            client=Thread(target=Client,args=(self,sock.family, sock.type, sock.proto,),kwargs={'fileno':copy})
-            client.daemon=True
-            client.start()
-            sock.close()
+            sock=self.sock.accept()[0] #accepts connection
+            copy = socket.dup(sock.fileno()) #Duplicates socket object
+            client=Thread(target=Client,args=(self,sock.family, sock.type, sock.proto,),kwargs={'fileno':copy}) #Creates a Thread
+            client.daemon=True #Sets the thread as a daemon Thread
+            client.start() #Starts the thread
+            sock.close() #Closes the original sock object
 
     def insertStatement(self,statement,*args):
         self.cursor.execute(statement,(args))
@@ -62,6 +60,9 @@ class Server:
         self.cursor.execute(statement,(args))
         records=self.cursor.fetchall()
         return records
+
+    def printRow(self,info):
+        print('|'.join(('%*s' % (20, i) for i in info)))
 
     def connectDB(self):
         self.db = mysql.connector.connect(host=hostname, user=username, passwd=password, db=database, port=3306)
@@ -73,7 +74,7 @@ class Client(socket.socket):
         self.parent=parent
         self.encryptChannel()
         address=':'.join(str(i) for i in self.getpeername())
-        print('Connection from',address)
+        self.address=address
 
         self.schoolID,self.username,password=self.recieveX()[0].split(',')
         self.username=self.username.title()
@@ -83,6 +84,10 @@ class Client(socket.socket):
         if self.schoolName:
             self.schoolName=self.schoolName[0][0]
             status=self.checkDetails(self.schoolID,self.username,password)
+
+            sd={1:'Success',0:'Failed',None:'Failed'}
+            info=[sd[status],self.address,self.schoolID,self.username,str(datetime.datetime.now())[:-7],'Yes']
+            self.parent.printRow(info)
 
             if status:
                 self.sendX(['Logged In'])
@@ -135,6 +140,7 @@ class Client(socket.socket):
         while True:
             msgList = self.recieveX()
             for message in msgList:
+              
                 package=ast.literal_eval(message)
                 if package['type']=='message':
                     self.message(package)  
@@ -147,10 +153,24 @@ class Client(socket.socket):
                     userList=self.getUserList()
                     justUsers={'userList':userList,'type':'userList'}
                     others=[i for i in self.school.clients]
+
+                    info=['Disconnected',self.address,self.schoolID,self.username,str(datetime.datetime.now())[:-7],'Yes']
+                    self.parent.printRow(info)
+
                     for i in others:
                         i.sendX([justUsers])
                     self.close()
                     return
+
+                if package['type']=='newGroup':
+                    existing = self.parent.getStatement('SELECT * from chatrooms WHERE name=%s',package['name'].title())
+                    if not existing:
+                        self.parent.insertStatement('INSERT into chatrooms (name,school) VALUES (%s,%s)',package['name'].title(),self.schoolID)
+                        self.chatrooms=[]
+                        self.makeChatrooms()
+                        x={'roomList':[i[0] for i in self.chatrooms],'type':'roomList'}
+                        for i in self.school.clients:
+                            i.sendX([x])
 
 
     def message(self,package):
@@ -159,7 +179,6 @@ class Client(socket.socket):
         chatroom=self.parent.getStatement("SELECT id FROM chatrooms WHERE name=%s and school=%s",chatroom,self.schoolID)[0][0]
         
         sender=package['sender']
-        print(message,sender,self.schoolID,chatroom)
         self.parent.insertStatement("""INSERT into messages
                     (message,sender,school,chatroom,display)
                     VALUES (%s,%s,%s,%s,1)""",message,sender,self.schoolID,chatroom)
@@ -189,10 +208,12 @@ class Client(socket.socket):
 
         if package['param']=='chatroom':
             chatroom=package['chatroom']
-            id=[i.ID for i in self.school.chatrooms if i.name==chatroom][0]
-            msgs=self.parent.getStatement('SELECT * FROM messages where school=%s and chatroom=%s',self.school.ID,id)
-            things = [{'type':'message','message': row[0], 'sender': row[1],'chatroom':chatroom,'datetime':str(row[4])} for row in msgs]
-            self.sendX(things)
+            id=[i.ID for i in self.school.chatrooms if i.name==chatroom]
+            if id:
+                id=id[0]
+                msgs=self.parent.getStatement('SELECT * FROM messages where school=%s and chatroom=%s',self.school.ID,id)
+                things = [{'type':'message','message': row[0], 'sender': row[1],'chatroom':chatroom,'datetime':str(row[4])} for row in msgs]
+                self.sendX(things)
             
     def checkDetails(self,school,username,password):
 
@@ -209,12 +230,12 @@ class Client(socket.socket):
                 
     def encryptChannel(self):
         
-        self.sendX([public],encrypt=False)
-        self.public=int(self.recieveX(encrypted=False)[0])
+        self.sendX([public],encrypt=False) #Send's the server's public key to the client
+        self.public=int(self.recieveX(encrypted=False)[0]) #Recieves the clients public key
 
-        key=pow(self.public,private,n)
-        commKey = HKDF(str(key).encode(), 32, None, SHA512, 1)
-        self.cipher=Cipher(commKey)
+        key=pow(self.public,private,n) #Performs modulo arithmetic to obtain a shared key
+        commKey = HKDF(str(key).encode(), 32, None, SHA512, 1) #Uses Key Derivation Function to generate key suitable for AES
+        self.cipher=Cipher(commKey) #Creates a Cipher from the final key suitable for use with AES
 
     def sendX(self,msgs,encrypt=True):
 
@@ -250,23 +271,23 @@ class Client(socket.socket):
         
         return x
 
-class Cipher(EcbMode):
+class Cipher():
     def __init__(self,key):
-        self.obj=AES.new(key,AES.MODE_ECB)
+        self.obj=AES.new(key,AES.MODE_ECB) #Creates a new AES object using the Key
 
     def pad(self,s):
-        return s + ((16-len(s) % 16) * '`')
+        return s + ((16-len(s) % 16) * '`')  #Pads message in order to make sure it fits the correct length for AES
 
     def encryptX(self,msg):
-        encrypted=self.obj.encrypt(self.pad(msg).encode()).hex()
-        return encrypted
+        encrypted=self.obj.encrypt(self.pad(msg).encode()).hex() #Encrypts message
+        return encrypted #Returns encrypted message
 
     def decryptX(self,ciphertext):
-        ciphertext=bytes(bytearray.fromhex(ciphertext))
-        dec = self.obj.decrypt(ciphertext)
-        dec=dec.decode('utf-8')
-        l = dec.count('`')
-        return dec[:len(dec)-l]
+        ciphertext=bytes(bytearray.fromhex(ciphertext)) #Turns base 16 ciphertext into base 2
+        dec = self.obj.decrypt(ciphertext) #Decrypts ciphertext
+        dec=dec.decode('utf-8') #Converts decrypted message to UTF8
+        l = dec.count('`') #Counts the number of padded characters added to the message in encrypted
+        return dec[:len(dec)-l] #Returns the message without the padded characters
 
 class School:
     def __init__(self,schoolName,schoolID):

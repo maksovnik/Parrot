@@ -53,7 +53,7 @@ class Login(tk.Frame):
         self.error = tk.Label(self,bg=colours['loginInner'],fg=colours['fg'],font='Arial 10 bold')
 
 
-        self.debug()
+        #self.debug()
         
     def debug(self):
         details=['ctk','maks','pass'] 
