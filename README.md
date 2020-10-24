@@ -1,2 +1,2 @@
 # Parrot
-Client/Server Python Chat 
+Client/Server Python Chat - developed by Maks Ovnik
