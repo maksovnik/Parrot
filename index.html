@@ -1,0 +1,33 @@
+<html>
+
+<head>
+    <link rel="shortcut icon" href="">
+    <title>Parrot</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+    <h1 class="title">Parrot</h1>
+    <p id="notification" hidden></p>
+    <div class="entry-modal" id="entry-modal">
+        <p>Create or Join Meeting</p>
+        <div>
+            <button onclick="createRoom()">Create Call</button>
+            <button onclick="joinRoom()">Join Call</button>
+        </div>
+    </div>
+    <div class="meet-area">
+
+        <div id="video-grid">
+            </div>
+
+        <div class="meet-controls-bar">
+            <button onclick="startScreenShare()">Screen Share</button>
+        </div>
+    </div>
+</body>
+
+<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+<script src="script.js"></script>
+
+</html>
