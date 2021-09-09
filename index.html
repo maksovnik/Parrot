@@ -9,20 +9,23 @@
 <body>
     <h1 class="title">Parrot</h1>
     <p id="notification" hidden></p>
+    <div id="id"></div>
+    
     <div class="entry-modal" id="entry-modal">
-        <p>Create or Join Meeting</p>
+        <input type="text" id="rID" value=""><br>
         <div>
-            <button onclick="createRoom()">Create Call</button>
-            <button onclick="joinRoom()">Join Call</button>
+            <button onclick="joinCall()">Join Call</button>
         </div>
     </div>
+
     <div class="meet-area">
 
         <div id="video-grid">
-            </div>
+        </div>
 
-        <div class="meet-controls-bar">
-            <button onclick="startScreenShare()">Screen Share</button>
+        <div hidden id="control-bar" class="meet-controls-bar">
+            <button id="share" onclick="toggleScreen()">Share Screen</button>
+            <button id="toggleCamera" onclick="toggleCamera()">Enable Camera</button>
         </div>
     </div>
 </body>
