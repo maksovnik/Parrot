@@ -1,15 +1,23 @@
-
-
-
 var myID= document.getElementById('myID')
-document.getElementById('generate').addEventListener('click', function () {
-    console.log("Pressed")
-    localConnection = new RTCPeerConnection()
-    
+const iceConfiguration = {
+    iceServers: [
+        {
+            urls: 'stun:stun.l.google.com:19302'
+        }
+    ]
+}
+
+
+async function generate(){
+    localConnection = new RTCPeerConnection(iceConfiguration); 
+
+
+    camera = await navigator.mediaDevices.getUserMedia({video: true,audio: true})
+
 
     localConnection.onicecandidate = e =>  {
-    console.log(" NEW ice candidnat!! on localconnection reprinting SDP " )
-    console.log(JSON.stringify(localConnection.localDescription))
+        console.log("New ICE Candidate!! SDP " )
+        //console.log(JSON.stringify(localConnection.localDescription))
     }
 
 
@@ -18,13 +26,16 @@ document.getElementById('generate').addEventListener('click', function () {
     sendChannel.onopen = e => console.log("open!!!!");
         sendChannel.onclose =e => console.log("closed!!!!!!");
 
+    camera.getTracks().forEach(track => {
+        console.log("Added")
+        localConnection.addTrack(track,camera)
+    })
 
+    
     localConnection.createOffer().then(o => {
         localConnection.setLocalDescription(o)
         myID.value = JSON.stringify(o);
 
-
-        console.log("Hi")
         
         document.getElementById('connect').addEventListener('click', async function () {
             var answer = JSON.parse(document.getElementById('otherID').value)
@@ -35,5 +46,5 @@ document.getElementById('generate').addEventListener('click', function () {
     })
 
 
-})
+}
 
