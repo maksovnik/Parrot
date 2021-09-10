@@ -1,0 +1,49 @@
+<html>
+
+<head>
+    <link rel="shortcut icon" href="">
+    <title>Parrot</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+    <h1 class="title">Parrot</h1>
+    <p id="notification" hidden></p>
+    <div id="id"></div>
+    
+    <div class="entry-modal" id="entry-modal">
+        <label>Your ID:</label><br/>
+        <textarea id="myID"></textarea><br/>
+        <label>Other ID:</label><br/>
+        <textarea id="otherID"></textarea><br/>
+
+    
+        <label>Enter Message:</label><br/>
+        <textarea id="message"></textarea>
+
+        <pre id="msgBox"></pre>
+
+
+
+        <div>
+            <button id="connect" >Join Call</button>
+            <button id="send" >Send</button>
+        </div>
+    </div>
+
+    <div class="meet-area">
+
+        <div id="video-grid">
+        </div>
+
+        <div id="control-bar" class="meet-controls-bar">
+            <button id="share" onclick="toggleScreen()">Share Screen</button>
+            <button id="toggleCamera" onclick="toggleCamera()">Enable Camera</button>
+        </div>
+    </div>
+</body>
+
+<script src="simplepeer.min.js"></script>
+<script src="script.js"></script>
+
+</html>
