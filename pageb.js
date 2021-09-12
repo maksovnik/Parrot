@@ -21,11 +21,11 @@ async function generate(){
     
 
     
-    var stream = new MediaStream()
-    remoteConnection.ontrack = event => {
-        console.log("Stream recieved")
-        stream.addTrack(event.track)
-    }
+    // var stream = new MediaStream()
+    // remoteConnection.ontrack = event => {
+    //     console.log("Stream recieved")
+    //     stream.addTrack(event.track)
+    // }
 
 
 
@@ -41,8 +41,8 @@ async function generate(){
             const pair = remoteConnection.sctp.transport.iceTransport.getSelectedCandidatePair();
             console.log(pair.remote.type);
 
-            local.srcObject = stream;
-            local.play();
+            // local.srcObject = stream;
+            // local.play();
         };
         receiveChannel.onclose =e => console.log("closed!!!!!!");
         remoteConnection.channel = receiveChannel;

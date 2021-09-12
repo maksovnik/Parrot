@@ -7,12 +7,11 @@ const iceConfiguration = {
     ]
 }
 
-
 async function generate(){
     localConnection = new RTCPeerConnection(iceConfiguration); 
 
 
-    camera = await navigator.mediaDevices.getUserMedia({video: true,audio: true})
+    // camera = await navigator.mediaDevices.getUserMedia({video: true,audio: true})
 
 
     localConnection.onicecandidate = e =>  {
@@ -26,10 +25,10 @@ async function generate(){
     sendChannel.onopen = e => console.log("open!!!!");
         sendChannel.onclose =e => console.log("closed!!!!!!");
 
-    camera.getTracks().forEach(track => {
-        console.log("Added")
-        localConnection.addTrack(track,camera)
-    })
+    // camera.getTracks().forEach(track => {
+    //     console.log("Added")
+    //     localConnection.addTrack(track,camera)
+    // })
 
     
     localConnection.createOffer().then(o => {
