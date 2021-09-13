@@ -12,7 +12,6 @@ document.getElementById('peer').innerHTML = window.location.hash ? "Peer A" : "P
 
 function setRemoteID(){
     var sdp = JSON.parse(document.getElementById('otherID').value)
-    console.log(sdp)
     connection.setRemoteDescription(sdp).then(a => console.log("Remote Description set"))
 }
 
@@ -64,15 +63,17 @@ async function generate() {
         const localStream = await navigator.mediaDevices.getDisplayMedia({audio: true, video: true})
         localStream.getTracks().forEach(track => {
             connection.addTrack(track,camera)
-            console.log("Added track to connection")
+            
+            console.log("Added track to connection "+ track.kind +" "+track.getCapabilities().deviceId)
         })
             
     }
 
     camera.getTracks().forEach(track => {
-        console.log("Added track to connection")
+        console.log("Added track to connection "+ track.kind +" "+track.getCapabilities().deviceId)
         connection.addTrack(track,camera)
     })
+
 
     connection.onicecandidate = e => {
         var t = JSON.stringify(connection.localDescription)
@@ -84,7 +85,8 @@ async function generate() {
     remoteStream = new MediaStream()
 
     connection.ontrack = event => {
-        console.log("Track Recieved!!")
+        console.log(event.track)
+        console.log("Track Recieved!!" + event.track.getCapabilities().deviceId)
         var video = document.createElement('video')
         var b = new MediaStream()
         b.addTrack(event.track)
@@ -124,8 +126,6 @@ async function generate() {
 }
 
 function open(){
-
-
 
 }
 
