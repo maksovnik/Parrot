@@ -5,6 +5,8 @@ const iceConfiguration = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
 
 
 
+
+
 async function generate(){
     remoteConnection = new RTCPeerConnection(iceConfiguration); 
 

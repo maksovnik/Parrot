@@ -8,12 +8,24 @@ const iceConfiguration = {
     ]
 }
 
+
+
 async function generate(){
     localConnection = new RTCPeerConnection(iceConfiguration); 
     
     // here
-    camera = await navigator.mediaDevices.getUserMedia({video: true,audio: true})
+    camera = await navigator.mediaDevices.getUserMedia({video: true,audio: {
+        autoGainControl: false,
+        channelCount: 2,
+        echoCancellation: false,
+        latency: 0,
+        noiseSuppression: false,
+        sampleRate: 48000,
+        sampleSize: 16,
+        volume: 1.0
+    }})
 
+    
     localConnection.onicecandidate = e =>  {
         console.log("New ICE Candidate!! SDP " )
         var t = JSON.stringify(localConnection.localDescription)
