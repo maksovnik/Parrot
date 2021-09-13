@@ -60,22 +60,24 @@ async function generate() {
         };
     }
 
+    const tracks = [];
     camera = await navigator.mediaDevices.getUserMedia(options)
+
+    camera.getTracks().forEach(track => tracks.push(track))
 
     if(document.getElementById('screen').checked){
         console.log("Screen enabled")
         const localStream = await navigator.mediaDevices.getDisplayMedia({audio: true, video: true})
-        localStream.getTracks().forEach(track => {
-            connection.addTrack(track,camera)
-            
-            console.log("Added track to connection "+ track.kind +" "+track.getCapabilities().deviceId)
-        })
+        localStream.getTracks().forEach(track => tracks.push(track))
             
     }
 
-    camera.getTracks().forEach(track => {
+    
+
+    tracks.forEach(track => {
+        connection.addTrack(track)
         console.log("Added track to connection "+ track.kind +" "+track.getCapabilities().deviceId)
-        connection.addTrack(track,camera)
+        addTrack(track,true)
     })
 
 
@@ -86,20 +88,11 @@ async function generate() {
     }
 
 
-    remoteStream = new MediaStream()
 
     connection.ontrack = event => {
         console.log(event.track)
         console.log("Track Recieved!!" + event.track.getCapabilities().deviceId)
-        var video = document.createElement('video')
-        var b = new MediaStream()
-        b.addTrack(event.track)
-        video.srcObject = b;
-        video.controls = true;
-        video.play();
-        videoGrid.append(video)
-
-    
+        addTrack(event.track,false)
     }
 
 
@@ -112,7 +105,6 @@ async function generate() {
 
         connection.createOffer().then(o => {
             connection.setLocalDescription(o)
-            
             document.getElementById('connect').onclick = setRemoteID
         })
 
@@ -131,5 +123,21 @@ async function generate() {
 
 function open(){
 
+}
+
+function addTrack(track,muted){
+    var video = document.createElement('video')
+    var b = new MediaStream()
+    b.addTrack(track)
+    video.srcObject = b;
+    video.controls = true;
+    
+    if(muted){
+        video.muted=true;
+    }
+    
+    video.play();
+    
+    videoGrid.append(video)
 }
 
