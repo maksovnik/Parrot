@@ -1,12 +1,8 @@
 
 var local = document.getElementById('local')
-const iceConfiguration = {
-    iceServers: [
-        {
-            urls: 'stun:stun2.l.google.com:19302'
-        }
-    ]
-}
+
+const iceConfiguration = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
+
 
 
 async function generate(){
@@ -14,19 +10,18 @@ async function generate(){
 
     remoteConnection.onicecandidate = e =>  {
         console.log("New ICE Candidate!! SDP " )
-        console.log(JSON.stringify(remoteConnection.localDescription))
         var answer = JSON.stringify(remoteConnection.localDescription)
+        console.log(answer)
         document.getElementById('myID').value = answer
     }
 
-    
 
-    
-    // var stream = new MediaStream()
-    // remoteConnection.ontrack = event => {
-    //     console.log("Stream recieved")
-    //     stream.addTrack(event.track)
-    // }
+    // here
+    var stream = new MediaStream()
+    remoteConnection.ontrack = event => {
+        console.log("Stream recieved")
+        stream.addTrack(event.track)
+    }
 
 
 
@@ -42,8 +37,15 @@ async function generate(){
             const pair = remoteConnection.sctp.transport.iceTransport.getSelectedCandidatePair();
             console.log(pair.remote.type);
             document.getElementById('status').innerHTML = "Status: Connected"
-            // local.srcObject = stream;
-            // local.play();
+
+
+
+
+
+
+            // here
+            local.srcObject = stream;
+            local.play();
         };
         receiveChannel.onclose =e => console.log("closed!!!!!!");
         remoteConnection.channel = receiveChannel;
@@ -54,7 +56,7 @@ async function generate(){
 
 
     var offer = JSON.parse(document.getElementById('otherID').value);
-    remoteConnection.setRemoteDescription(offer).then(a=>console.log("done"))
+    remoteConnection.setRemoteDescription(offer).then(a=>console.log("done"), a => console.log(a))
 
     //create answer
 
