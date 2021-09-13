@@ -7,7 +7,7 @@ const iceConfig = {
 }
 
 peerA = window.location.hash;
-document.getElementById('peer').innerHTML = window.location.hash ? "Peer A" : "Peer B"
+document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
 
 
 function setRemoteID(){
@@ -32,8 +32,12 @@ function setupChannel(channel){
     channel.onclose = e => console.log("closed!!!!!!");
 }
 
+function hideBox(){
+    document.getElementById("callSetup").style.visibility = "hidden";
+}
 async function generate() {
     
+    hideBox()
     connection = new RTCPeerConnection(iceConfig);
     var options = {};
 
