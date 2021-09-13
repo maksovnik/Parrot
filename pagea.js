@@ -1,8 +1,9 @@
 var myID= document.getElementById('myID')
+
 const iceConfiguration = {
     iceServers: [
         {
-            urls: 'stun:stun.l.google.com:19302'
+            urls: 'stun:stun2.l.google.com:19302'
         }
     ]
 }
@@ -16,13 +17,16 @@ async function generate(){
 
     localConnection.onicecandidate = e =>  {
         console.log("New ICE Candidate!! SDP " )
-        //console.log(JSON.stringify(localConnection.localDescription))
+        console.log(JSON.stringify(localConnection.localDescription))
     }
 
 
     const sendChannel = localConnection.createDataChannel("sendChannel");
     sendChannel.onmessage =e =>  console.log("messsage received!!!"  + e.data )
-    sendChannel.onopen = e => console.log("open!!!!");
+    sendChannel.onopen = e => {
+        console.log("open!!!!");
+        document.getElementById('status').innerHTML = "Status: Connected"
+    }
         sendChannel.onclose =e => console.log("closed!!!!!!");
 
     // camera.getTracks().forEach(track => {

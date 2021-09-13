@@ -3,7 +3,7 @@ var local = document.getElementById('local')
 const iceConfiguration = {
     iceServers: [
         {
-            urls: 'stun:stun.l.google.com:19302'
+            urls: 'stun:stun2.l.google.com:19302'
         }
     ]
 }
@@ -14,6 +14,7 @@ async function generate(){
 
     remoteConnection.onicecandidate = e =>  {
         console.log("New ICE Candidate!! SDP " )
+        console.log(JSON.stringify(remoteConnection.localDescription))
         var answer = JSON.stringify(remoteConnection.localDescription)
         document.getElementById('myID').value = answer
     }
@@ -40,7 +41,7 @@ async function generate(){
             console.log("open!!!!")
             const pair = remoteConnection.sctp.transport.iceTransport.getSelectedCandidatePair();
             console.log(pair.remote.type);
-
+            document.getElementById('status').innerHTML = "Status: Connected"
             // local.srcObject = stream;
             // local.play();
         };
