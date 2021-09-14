@@ -127,11 +127,13 @@ function open(){
 
 function addTrack(track,muted){
     var video = document.createElement('video')
+
+    
     var b = new MediaStream()
     b.addTrack(track)
     video.srcObject = b;
     video.controls = true;
-    
+
     if(muted){
         video.muted=true;
     }
