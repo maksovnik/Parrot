@@ -58,12 +58,6 @@ function send(msg, type) {
 }
 
 
-// function setRemoteID(){
-//     var sdp = JSON.parse(document.getElementById('otherID').value)
-//     connection.setRemoteDescription(sdp).then(a => console.log("Remote Description set"))
-// }
-
-
 function setupChannel(channel) {
     channel.onmessage = e => console.log("messsage received!!!" + e.data)
     channel.onopen = e => {
@@ -77,7 +71,7 @@ function setupChannel(channel) {
 }
 
 function hideBox() {
-    document.getElementById("callSetup").style.visibility = "hidden";
+    document.getElementById("setup").style.visibility = "hidden";
 }
 async function generate() {
 
@@ -121,8 +115,7 @@ async function generate() {
         camera.getTracks().forEach(track => {
             console.log("Added Camera track to connection")
             connection.addTrack(track,camera)
-            
-            //addTrack(track, true)
+        
         })
 
         if (document.getElementById('screen').checked) {
@@ -136,7 +129,6 @@ async function generate() {
             localStream.getTracks().forEach(track => {
                 console.log("Added Stream track to connection")
                 connection.addTrack(track,localStream)
-                //addTrack(track, true);
             })
         }
 
@@ -192,11 +184,6 @@ async function generate() {
                 })
 
                 connection.setLocalDescription(o)
-
-                const msids = o.sdp.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.startsWith('a=msid:'));
-                console.log('offer msids', msids);
             })
 
 
@@ -212,10 +199,7 @@ async function generate() {
                 sdp = JSON.parse(e.data)
                 if(sdp.type=='offer'){
                     connection.setRemoteDescription(sdp).then(a => console.log("Remote Description set"))
-                    await connection.createAnswer().then(a => {
-                        connection.setLocalDescription(a)
-                        //send(a, Ctype);
-                    })
+                    connection.setLocalDescription()
                 }
 
             })

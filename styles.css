@@ -1,7 +1,6 @@
 #video-grid {
 	display: flex;
 	justify-content: center;
-	flex-wrap: wrap;
 }
 
 h1{
@@ -23,4 +22,8 @@ body {
 
 .content img{
   margin-top: 10;
+}
+
+video{
+  width:500px;
 }
