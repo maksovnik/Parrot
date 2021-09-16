@@ -4,7 +4,7 @@ const iceConfig = {
         urls: 'stun:stun.l.google.com:19302'
     }]
 }
-
+var connection;
 
 var socket
 
@@ -27,7 +27,12 @@ function setupSocket() {
 
     socket.addEventListener('message', e => {
         try{
-            console.log('New Message:', JSON.parse(e.data))
+            data=JSON.parse(e.data)
+            console.log('New Message:', data)
+            if(data.error=="room taken"){
+                socket.close()
+                connection.close();
+            }
         }
         catch(e){
             console.log('New Message:', e.data)
@@ -38,6 +43,10 @@ function setupSocket() {
 }
 
 function send(msg, type) {
+    if(socket.readyState!=WebSocket.OPEN){
+        return;
+    }
+    console.log("Sending:"+msg)
     const payload = {
         action: type,
         msg
@@ -59,7 +68,6 @@ function setupChannel(channel) {
 
         const pair = connection.sctp.transport.iceTransport.getSelectedCandidatePair();
         console.log(pair.remote.type);
-        open()
 
     }
     channel.onclose = e => console.log("closed!!!!!!");
@@ -70,7 +78,7 @@ function hideBox() {
 }
 async function generate() {
 
-   //var room = document.getElementById('room').value
+   var room = document.getElementById('room').value
 
 
 
@@ -79,7 +87,7 @@ async function generate() {
     socket.addEventListener('open', async e => {
         console.log('WebSocket is connected')
 
-        //sendRoom(room);
+        send({'room':room},"joinRoom");
 
         hideBox()
         connection = new RTCPeerConnection(iceConfig);
@@ -107,7 +115,10 @@ async function generate() {
         const tracks = [];
         camera = await navigator.mediaDevices.getUserMedia(options)
 
-        camera.getTracks().forEach(track => tracks.push(track))
+
+        camera.getTracks().forEach(track => {
+            tracks.push(track)
+        })
 
         if (document.getElementById('screen').checked) {
             console.log("Screen enabled")
@@ -122,7 +133,7 @@ async function generate() {
 
         tracks.forEach(track => {
             connection.addTrack(track)
-            console.log("Added track to connection. Type:" + track.kind )
+            console.log("Added track to connection. Type:" + track.kind + " "+track.id + " "+track.label)
             addTrack(track, true)
         })
 
@@ -141,7 +152,7 @@ async function generate() {
 
 
         connection.ontrack = event => {
-            console.log("Track Recieved!! Type:" + event.track.kind)
+            console.log("Track Recieved!! Type:" + JSON.stringify(event.track.getConstraints()))
             addTrack(event.track, false)
         }
 
@@ -157,7 +168,11 @@ async function generate() {
 
             connection.createOffer().then(o => {
                 socket.addEventListener('message', e => {
-                    connection.setRemoteDescription(JSON.parse(e.data)).then(a => console.log("Remote Description set"))
+                    var s = JSON.parse(e.data)
+                    if(s.type=='answer'){
+                        connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
+                    }
+                    
                 })
 
                 connection.setLocalDescription(o)
@@ -188,10 +203,6 @@ async function generate() {
         }
 
     })
-
-}
-
-function open() {
 
 }
 
