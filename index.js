@@ -168,11 +168,16 @@ async function generate() {
 
         sock.addEventListener('message', async e => {
             var s = JSON.parse(e.data)
-            connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
+            console.log("HERE:"+JSON.stringify(s))
+            if(s.type=='offer'||s.type=='answer'){
+                connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
 
-            if(!peerA){
-                connection.setLocalDescription()
+                if(!peerA){
+                    connection.setLocalDescription()
+                }
             }
+            
+
             
         })
 
