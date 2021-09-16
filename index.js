@@ -48,6 +48,8 @@ function send(msg, type) {
         action: type,
         msg
     }
+
+    console.log(payload)
     sock.send(JSON.stringify(payload))
 }
 
@@ -119,6 +121,7 @@ async function generate() {
         connection.onconnectionstatechange = e=>{
             if(connection.connectionState == 'connected'){
                 console.log("Connected")
+                document.getElementById("status").style.visibility = "hidden";
             }
         }
 
@@ -128,6 +131,9 @@ async function generate() {
 
         connection.onicegatheringstatechange = e => {
             if (connection.iceGatheringState == 'complete') {
+                if(peerA){
+                    document.getElementById("status").style.visibility = "visible";
+                }
                 console.log("Ice Gathering complete")
                 var t = connection.localDescription
                 var p = t.toJSON()
@@ -135,6 +141,7 @@ async function generate() {
                 console.log(p)
                 if(peerA){
                     send(p, 'sendOffer')
+                    console.log("Offer has been sent")
                 }
                 else{
                     send(p, 'sendAnswer')
