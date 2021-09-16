@@ -16,6 +16,9 @@ peerA = window.location.hash;
 document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
 
 
+const id2content = {};
+
+const remoteStreams = []
 
 function setupSocket() {
 
@@ -112,12 +115,14 @@ async function generate() {
             };
         }
 
-        const tracks = [];
         camera = await navigator.mediaDevices.getUserMedia(options)
 
-
+        id2content[camera.id] = 'webcam'
         camera.getTracks().forEach(track => {
-            tracks.push(track)
+            console.log("Added Camera track to connection")
+            connection.addTrack(track,camera)
+            
+            //addTrack(track, true)
         })
 
         if (document.getElementById('screen').checked) {
@@ -126,16 +131,15 @@ async function generate() {
                 audio: true,
                 video: true
             })
-            localStream.getTracks().forEach(track => tracks.push(track))
+
+            id2content[localStream.id] = 'screen'
+            localStream.getTracks().forEach(track => {
+                console.log("Added Stream track to connection")
+                connection.addTrack(track,localStream)
+                //addTrack(track, true);
+            })
         }
 
-
-
-        tracks.forEach(track => {
-            connection.addTrack(track)
-            console.log("Added track to connection. Type:" + track.kind + " "+track.id + " "+track.label)
-            addTrack(track, true)
-        })
 
 
         connection.onicecandidate = e => {
@@ -146,14 +150,24 @@ async function generate() {
             if (connection.iceGatheringState == 'complete') {
                 console.log("Ice Gathering complete")
                 var t = connection.localDescription
-                send(t, Ctype)
+                var p = t.toJSON()
+                p["meta"] = id2content;
+                console.log(p)
+                send(p, Ctype)
             }
         }
 
 
         connection.ontrack = event => {
-            console.log("Track Recieved!! Type:" + JSON.stringify(event.track.getConstraints()))
-            addTrack(event.track, false)
+            var track = event.track;
+            var stream = event.streams[0]
+            
+            if (remoteStreams.indexOf(stream) === -1){
+                remoteStreams.push(stream);
+                addStream(stream)
+            }
+
+            stream.addTrack(track);
         }
 
 
@@ -167,8 +181,10 @@ async function generate() {
 
 
             connection.createOffer().then(o => {
+                
                 socket.addEventListener('message', e => {
                     var s = JSON.parse(e.data)
+                    console.log(s);
                     if(s.type=='answer'){
                         connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
                     }
@@ -176,6 +192,11 @@ async function generate() {
                 })
 
                 connection.setLocalDescription(o)
+
+                const msids = o.sdp.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.startsWith('a=msid:'));
+                console.log('offer msids', msids);
             })
 
 
@@ -206,13 +227,10 @@ async function generate() {
 
 }
 
-function addTrack(track, muted) {
+function addStream(stream, muted) {
     var video = document.createElement('video')
 
-
-    var b = new MediaStream()
-    b.addTrack(track)
-    video.srcObject = b;
+    video.srcObject = stream;
     video.controls = true;
 
     if (muted) {
