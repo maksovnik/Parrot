@@ -93,6 +93,7 @@ async function generate() {
 
         camera = await navigator.mediaDevices.getUserMedia(options)
 
+        addStream(camera,true)
         id2content[camera.id] = 'webcam'
         camera.getTracks().forEach(track => {
             console.log("Added Camera track to connection")
