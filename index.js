@@ -23,7 +23,6 @@ function setupsock() {
     sock.addEventListener('error', e => console.error('Socket is in error', e))
 
     sock.addEventListener('message', e => {
-        console.log("Ping!")
         try{
             data=JSON.parse(e.data)
             console.log('New Message:', data)
@@ -62,7 +61,10 @@ async function generate() {
 
 
     sock = new WebSocket('wss://br5co6ogz2.execute-api.eu-west-3.amazonaws.com/production')
+    
     setupsock()
+    
+
     sock.addEventListener('open', async e => {
         console.log('Socket is connected')
 
@@ -120,6 +122,9 @@ async function generate() {
             if(connection.connectionState === 'connected'){
                 console.log("Connected")
                 document.getElementById("status").style.visibility = "hidden";
+
+                const pair = connection.sctp.transport.iceTransport.getSelectedCandidatePair();
+                console.log(pair.remote.type);
             }
         }
 
@@ -127,6 +132,7 @@ async function generate() {
             console.log("New ICE Candidate!")
         }
 
+        
         connection.onicegatheringstatechange = e => {
             if (connection.iceGatheringState === 'complete') {
                 if(peerA){
@@ -136,15 +142,8 @@ async function generate() {
                 var t = connection.localDescription
                 var p = t.toJSON()
                 p["meta"] = id2content;
-                if(peerA){
-                    send(p, 'sendOffer')
-                    console.log("Offer has been sent")
-                }
-                else{
-                    console.log("Sending answer")
-                    console.log(p)
-                    send(p, 'sendAnswer')
-                }
+                console.log("SDP has been sent")
+                send(p, 'signal')
                 
             }
         }
@@ -163,27 +162,40 @@ async function generate() {
         }
 
 
-        
-        if(peerA){
-            connection.setLocalDescription()
-        }
+        send({'room':room},"joinRoom");
 
-        
         sock.addEventListener('message', async e => {
-            var s = JSON.parse(e.data)
-            if(s.type==='offer'||s.type==='answer'){
-                connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
+            var s = JSON.parse(e.data).message
+            if(s==='roomJoined'){
+                console.log("Yesssss")
 
-                if(!peerA){
+
+
+
+                if(peerA){
                     connection.setLocalDescription()
                 }
+        
+                
+                sock.addEventListener('message', async e => {
+                    var s = JSON.parse(e.data)
+                    if(s.type==='offer'||s.type==='answer'){
+                        connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
+        
+                        if(!peerA){
+                            connection.setLocalDescription()
+                        }
+                    }
+                    
+        
+                    
+                })
             }
-            
-
-            
         })
 
-        send({'room':room},"joinRoom");
+        
+
+        
 
 
     })
