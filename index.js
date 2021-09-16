@@ -5,35 +5,29 @@ const iceConfig = {
     }]
 }
 var connection;
-
-var socket
-
-var Ctype;
-
-
+var sock
 
 peerA = window.location.hash;
 document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
 
 
 const id2content = {};
-
 const remoteStreams = []
 
-function setupSocket() {
+function setupsock() {
 
 
 
-    socket.addEventListener('close', e => console.log('WebSocket is closed'))
+    sock.addEventListener('close', e => console.log('Socket is closed'))
 
-    socket.addEventListener('error', e => console.error('WebSocket is in error', e))
+    sock.addEventListener('error', e => console.error('Socket is in error', e))
 
-    socket.addEventListener('message', e => {
+    sock.addEventListener('message', e => {
         try{
             data=JSON.parse(e.data)
             console.log('New Message:', data)
             if(data.error=="room taken"){
-                socket.close()
+                sock.close()
                 connection.close();
             }
         }
@@ -46,7 +40,7 @@ function setupSocket() {
 }
 
 function send(msg, type) {
-    if(socket.readyState!=WebSocket.OPEN){
+    if(sock.readyState!=WebSocket.OPEN){
         return;
     }
     console.log("Sending:"+msg)
@@ -54,21 +48,9 @@ function send(msg, type) {
         action: type,
         msg
     }
-    socket.send(JSON.stringify(payload))
+    sock.send(JSON.stringify(payload))
 }
 
-
-function setupChannel(channel) {
-    channel.onmessage = e => console.log("messsage received!!!" + e.data)
-    channel.onopen = e => {
-        console.log("Open!!!!");
-
-        const pair = connection.sctp.transport.iceTransport.getSelectedCandidatePair();
-        console.log(pair.remote.type);
-
-    }
-    channel.onclose = e => console.log("closed!!!!!!");
-}
 
 function hideBox() {
     document.getElementById("setup").style.visibility = "hidden";
@@ -79,10 +61,10 @@ async function generate() {
 
 
 
-    socket = new WebSocket('wss://br5co6ogz2.execute-api.eu-west-3.amazonaws.com/production')
-    setupSocket()
-    socket.addEventListener('open', async e => {
-        console.log('WebSocket is connected')
+    sock = new WebSocket('wss://br5co6ogz2.execute-api.eu-west-3.amazonaws.com/production')
+    setupsock()
+    sock.addEventListener('open', async e => {
+        console.log('Socket is connected')
 
         send({'room':room},"joinRoom");
 
@@ -133,6 +115,11 @@ async function generate() {
         }
 
 
+        connection.onconnectionstatechange = e=>{
+            if(connection.connectionState == 'connected'){
+                console.log("Connected")
+            }
+        }
 
         connection.onicecandidate = e => {
             console.log("New ICE Candidate!")
@@ -145,7 +132,13 @@ async function generate() {
                 var p = t.toJSON()
                 p["meta"] = id2content;
                 console.log(p)
-                send(p, Ctype)
+                if(peerA){
+                    send(p, 'sendOffer')
+                }
+                else{
+                    send(p, 'sendAnswer')
+                }
+                
             }
         }
 
@@ -163,49 +156,25 @@ async function generate() {
         }
 
 
-
-
-        if (peerA) {
-
-            Ctype = "sendOffer";
-            const sendChannel = connection.createDataChannel("sendChannel");
-            setupChannel(sendChannel)
-
-
-            connection.createOffer().then(o => {
-                
-                socket.addEventListener('message', e => {
-                    var s = JSON.parse(e.data)
-                    console.log(s);
-                    if(s.type=='answer'){
-                        connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
-                    }
-                    
-                })
-
-                connection.setLocalDescription(o)
-            })
-
-
-        } else {
-
-            send({},'getOffer')
-
-            Ctype = "sendAnswer";
-            connection.ondatachannel = e => setupChannel(e.channel)
-            //setRemoteID();
-
-            socket.addEventListener('message', async e => {
-                sdp = JSON.parse(e.data)
-                if(sdp.type=='offer'){
-                    connection.setRemoteDescription(sdp).then(a => console.log("Remote Description set"))
-                    connection.setLocalDescription()
-                }
-
-            })
-
-
+        
+        if(peerA){
+            connection.setLocalDescription()
         }
+        else{
+            send({},'getOffer')
+        }
+        
+
+        sock.addEventListener('message', async e => {
+            var s = JSON.parse(e.data)
+            connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
+
+            if(!peerA){
+                connection.setLocalDescription()
+            }
+            
+        })
+
 
     })
 
