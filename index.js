@@ -5,7 +5,8 @@ const iceConfig = {
     }]
 }
 var connection;
-var sock
+var sock;
+
 
 peerA = window.location.hash;
 document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
@@ -13,31 +14,6 @@ document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
 
 const id2content = {};
 const remoteStreams = []
-
-function setupsock() {
-
-
-
-    sock.addEventListener('close', e => console.log('Socket is closed'))
-
-    sock.addEventListener('error', e => console.error('Socket is in error', e))
-
-    sock.addEventListener('message', e => {
-        try{
-            data=JSON.parse(e.data)
-            console.log('New Message:', data)
-            if(data.error==="room taken"){
-                sock.close()
-                connection.close();
-            }
-        }
-        catch(e){
-            console.log('New Message:', e.data)
-        }
-        
-    })
-
-}
 
 function send(msg, type) {
     if(sock.readyState!=WebSocket.OPEN){
@@ -62,8 +38,25 @@ async function generate() {
 
     sock = new WebSocket('wss://br5co6ogz2.execute-api.eu-west-3.amazonaws.com/production')
     
-    setupsock()
-    
+
+    sock.addEventListener('close', e => console.log('Socket is closed'))
+
+    sock.addEventListener('error', e => console.error('Socket is in error', e))
+
+    sock.addEventListener('message', e => {
+        try{
+            data=JSON.parse(e.data)
+            console.log('New Message:', data)
+            if(data.error==="room taken"){
+                sock.close()
+                connection.close();
+            }
+        }
+        catch(e){
+            console.log('New Message:', e.data)
+        }
+        
+    })
 
     sock.addEventListener('open', async e => {
         console.log('Socket is connected')
@@ -118,13 +111,21 @@ async function generate() {
         }
 
 
-        connection.onconnectionstatechange = e=>{
+        connection.onconnectionstatechange = async e=>{
             if(connection.connectionState === 'connected'){
                 console.log("Connected")
                 document.getElementById("status").style.visibility = "hidden";
 
-                const pair = connection.sctp.transport.iceTransport.getSelectedCandidatePair();
-                console.log(pair.remote.type);
+                const stats = await connection.getStats()
+                let selectedLocalCandidate;
+                for (const {type, state, localCandidateId} of stats.values())
+                    if (type === 'candidate-pair' && state === 'succeeded' && localCandidateId) {
+                        selectedLocalCandidate = localCandidateId
+                        break
+                    }
+                    var t1 = performance.now()
+                console.log(stats.get(selectedLocalCandidate).candidateType)
+            
             }
         }
 
@@ -167,10 +168,6 @@ async function generate() {
         sock.addEventListener('message', async e => {
             var s = JSON.parse(e.data).message
             if(s==='roomJoined'){
-                console.log("Yesssss")
-
-
-
 
                 if(peerA){
                     connection.setLocalDescription()
