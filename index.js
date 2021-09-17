@@ -8,8 +8,8 @@ var connection;
 var sock;
 
 
-peerA = window.location.hash;
-document.title = window.location.hash ? "Parrot - Peer A" : "Parrot - Peer B"
+var localstream;
+document.title = "Parrot"
 
 
 const id2content = {};
@@ -98,7 +98,7 @@ async function generate() {
 
         if (document.getElementById('screen').checked) {
             console.log("Screen enabled")
-            const localStream = await navigator.mediaDevices.getDisplayMedia({
+            localStream = await navigator.mediaDevices.getDisplayMedia({
                 audio: true,
                 video: true
             })
@@ -106,7 +106,7 @@ async function generate() {
             id2content[localStream.id] = 'screen'
             localStream.getTracks().forEach(track => {
                 console.log("Added Stream track to connection")
-                connection.addTrack(track,localStream)
+                //connection.addTrack(track,localStream)
             })
         }
 
@@ -136,17 +136,24 @@ async function generate() {
         
         connection.onicegatheringstatechange = e => {
             if (connection.iceGatheringState === 'complete') {
-                if(peerA){
-                    document.getElementById("status").style.visibility = "visible";
-                }
+                // if(peerA){
+                //     document.getElementById("status").style.visibility = "visible";
+                // }
                 console.log("Ice Gathering complete")
                 var t = connection.localDescription
                 var p = t.toJSON()
                 p["meta"] = id2content;
                 console.log("SDP has been sent")
                 send(p, 'signal')
+
+                // connection.onicecandidate = ({candidate}) => {
+                //     console.log(candidate)
+                //     //io.send({candidate})
+                // };
+
+                }
+
                 
-            }
         }
 
 
@@ -166,20 +173,33 @@ async function generate() {
         send({'room':room},"joinRoom");
 
         sock.addEventListener('message', async e => {
-            var s = JSON.parse(e.data).message
+            var o = JSON.parse(e.data)
+            var s = o.message
             if(s==='roomJoined'){
 
-                if(peerA){
+                var clientId = o.order
+
+                if(clientId==1){
                     connection.setLocalDescription()
                 }
-        
+                
+                connection.onnegotiationneeded = async () => {
+                    await connection.setLocalDescription(await connection.createOffer());
+
+                    var t = connection.localDescription
+                    var p = t.toJSON()
+                    p["meta"] = id2content;
+                    console.log("SDP has been sent")
+                    send(p, 'signal')
+
+                  }
                 
                 sock.addEventListener('message', async e => {
                     var s = JSON.parse(e.data)
                     if(s.type==='offer'||s.type==='answer'){
                         connection.setRemoteDescription(s).then(a => console.log("Remote Description set")) 
         
-                        if(!peerA){
+                        if(clientId==2){
                             connection.setLocalDescription()
                         }
                     }
