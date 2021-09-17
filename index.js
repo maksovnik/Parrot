@@ -23,6 +23,7 @@ function send(msg, type) {
         action: type,
         msg
     }
+    console.log(JSON.stringify(payload))
     sock.send(JSON.stringify(payload))
 }
 
@@ -35,9 +36,8 @@ async function generate() {
    var room = document.getElementById('room').value
 
 
+   sock = new WebSocket('ws://127.0.0.1:8765')
 
-    sock = new WebSocket('wss://br5co6ogz2.execute-api.eu-west-3.amazonaws.com/production')
-    
 
     sock.addEventListener('close', e => console.log('Socket is closed'))
 
