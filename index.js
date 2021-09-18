@@ -28,6 +28,18 @@ function send(msg, type) {
 	sock.send(JSON.stringify(payload))
 }
 
+async function getConnectionMethod(){
+    const stats = await connection.getStats()
+    let selectedLocalCandidate;
+    for (const {type, state, localCandidateId} of stats.values())
+        if (type === 'candidate-pair' && state === 'succeeded' && localCandidateId) {
+            selectedLocalCandidate = localCandidateId
+            break
+        }
+
+    var result = stats.get(selectedLocalCandidate).candidateType
+    return result
+}
 function contains(x, y) {
 	if (y.indexOf(x) === -1) {
 		return false;
@@ -97,7 +109,11 @@ async function generate() {
 
 		connection.onconnectionstatechange = async e => {
 			if (connection.connectionState === 'connected') {
-				console.log("Connected")
+				console.log("Connected via:"+await getConnectionMethod())
+                
+     
+
+                
 			}
 		}
 
@@ -142,7 +158,6 @@ async function generate() {
             video.controls = true;
 
 			stream.addTrack(track);
-            console.log(stream.getTracks().length)
 		}
 
 
