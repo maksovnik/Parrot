@@ -12,8 +12,7 @@ cameraOn = false;
 document.title = "Parrot"
 
 var sender;
-
-var video;
+var camera;
 
 const remoteStreams = []
 
@@ -37,10 +36,18 @@ function contains(x, y) {
 	}
 }
 
+function switchDisplay(){
+    document.getElementById("camera").style.display = '';
+    document.getElementById("screen").style.display = '';
+    document.getElementById("generate").style.display = 'none';
+    document.getElementById("label").style.display = 'none';
+    document.getElementById("room").style.display = 'none';
+}
+
 async function generate() {
 
 	var room = document.getElementById('room').value
-
+    switchDisplay();
 
 	sock = new WebSocket('ws://127.0.0.1:8765')
 
@@ -124,10 +131,11 @@ async function generate() {
 				video.srcObject = stream;
 				video.controls = true;
 
-				video.play();
+				//video.play();
 
 				videoGrid.append(video)
-
+                video.load();
+                video.play();
                 stream.onremovetrack = k =>{
                     video.srcObject = stream;
                     video.play();
@@ -153,19 +161,24 @@ async function generate() {
 			var o = JSON.parse(e.data)
 			var s = o.message
 			if (s === 'roomJoined') {
-                
+
                 document.getElementById('camera').onclick = async e=>{
+                    console.log("1")
                     if(cameraOn==false){
+                        console.log("2")
                         cameraOn = true;
                         var stream = await navigator.mediaDevices.getUserMedia({"video":true})
+                        console.log('6')
                         sender = connection.addTrack(stream.getVideoTracks()[0],camera)
+                        
 
                     }
                     else{
+                        console.log("3")
                         cameraOn = false;
                         await connection.removeTrack(sender);
-                        connection.restartIce()
                     }
+                    connection.restartIce()
                     await connection.setLocalDescription(connection.createOffer())
 
                 }
@@ -184,10 +197,11 @@ async function generate() {
 					if (s.type === 'offer' || s.type === 'answer') {
 						connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
 
-						if (clientId == 2) {
-							connection.setLocalDescription()
-						}
+						
 
+                        connection.setLocalDescription()
+
+					
 
 					}
 
