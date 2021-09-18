@@ -7,12 +7,15 @@ const iceConfig = {
 }
 
 var sock;
-
+screenSenders =[]
 cameraOn = false;
+screenOn = false;
 document.title = "Parrot"
 
-var sender;
 var camera;
+
+
+var streamToVideo = {}
 
 const remoteStreams = []
 
@@ -133,29 +136,49 @@ async function generate() {
 
 
 
-		connection.ontrack = async event => {
+		connection.ontrack = event => {
 
 			console.log("Track recieved")
 			var track = event.track;
-			stream = event.streams[0]
+			var stream = event.streams[0]
+			console.log(stream)
+			
 
 			if (!contains(stream, remoteStreams)) {
+
+				
 				remoteStreams.push(stream);
                 
-				video = document.createElement('video')
+				const video = document.createElement('video')
 				video.srcObject = stream;
+
+				console.log(video)
+				video.controls = true;
+				
+				streamToVideo[stream] = video;
 
 				videoGrid.append(video)
                 video.play();
 
                 stream.onremovetrack = k =>{
-                    video.srcObject = stream;
-                    video.play();
+					if(stream.getTracks().length==0){
+
+						video.pause();
+						video.removeAttribute('src'); // empty source
+						video.load();
+						video.remove();
+
+					}
+					else{
+						video.srcObject = stream;
+						video.load();
+						video.play();
+					}
                 }
 
 			}
             
-            video.controls = true;
+            streamToVideo[stream].controls = true;
 
 			stream.addTrack(track);
 		}
@@ -178,6 +201,8 @@ async function generate() {
                     console.log("1")
                     if(cameraOn==false){
 
+						document.getElementById("camera").innerHTML = "Disable Camera"
+
                         console.log("2")
                         cameraOn = true;
                         var stream = await navigator.mediaDevices.getUserMedia({"video":true})
@@ -187,6 +212,7 @@ async function generate() {
 
                     }
                     else{
+						document.getElementById("camera").innerHTML = "Enable Camera"
                         console.log("3")
                         cameraOn = false;
                         connection.removeTrack(sender);
@@ -195,6 +221,30 @@ async function generate() {
                     connection.setLocalDescription(await connection.createOffer({iceRestart:true}))
 
                 }
+
+				document.getElementById('screen').onclick = async e=>{
+                    console.log("1")
+                    if(screenOn==false){
+
+                        document.getElementById("screen").innerHTML = "Disable Screen"
+                        var stre = await navigator.mediaDevices.getDisplayMedia({audio: true, video: true})
+						
+						var tracks = stre.getTracks()
+						for (let i = 0; i < tracks.length; i++) {
+							screenSenders.push(connection.addTrack(tracks[i],stre))
+						}
+
+                    }
+                    else{
+						document.getElementById("screen").innerHTML = "Enable Screen"
+						screenSenders.forEach(s => connection.removeTrack(s))
+                        
+                    }
+
+					screenOn = !screenOn;
+
+                    connection.setLocalDescription(await connection.createOffer({iceRestart:true}))
+				}
 
 
 				var clientId = o.order
@@ -214,7 +264,7 @@ async function generate() {
 
                         connection.setLocalDescription()
 
-					
+						console.log(screenSenders)
 
 					}
 
