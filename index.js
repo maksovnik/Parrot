@@ -127,22 +127,19 @@ async function generate() {
 				remoteStreams.push(stream);
                 
 				video = document.createElement('video')
-
 				video.srcObject = stream;
-				video.controls = true;
-
-				//video.play();
 
 				videoGrid.append(video)
-                video.load();
                 video.play();
+
                 stream.onremovetrack = k =>{
                     video.srcObject = stream;
                     video.play();
                 }
 
-
 			}
+            
+            video.controls = true;
 
 			stream.addTrack(track);
             console.log(stream.getTracks().length)
@@ -165,6 +162,7 @@ async function generate() {
                 document.getElementById('camera').onclick = async e=>{
                     console.log("1")
                     if(cameraOn==false){
+
                         console.log("2")
                         cameraOn = true;
                         var stream = await navigator.mediaDevices.getUserMedia({"video":true})
@@ -176,10 +174,10 @@ async function generate() {
                     else{
                         console.log("3")
                         cameraOn = false;
-                        await connection.removeTrack(sender);
+                        connection.removeTrack(sender);
                     }
-                    connection.restartIce()
-                    await connection.setLocalDescription(connection.createOffer())
+
+                    connection.setLocalDescription(await connection.createOffer({iceRestart:true}))
 
                 }
 
