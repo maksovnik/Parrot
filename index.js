@@ -155,14 +155,67 @@ async function connect() {
     })
 
 
-    sock.addEventListener('open', e => {
-		onOpen();
-    })
+    sock.addEventListener('open', e => open())
 
 }
 
+function deleteVideo(video){
+	video.pause();
+	video.removeAttribute('src'); // empty source
+	video.load();
+	video.remove();
+}
 
-async function onOpen(){
+function updateVideo(video,stream){
+	video.srcObject = stream;
+	video.load();
+	video.play();
+
+	video.controls = true;
+}
+
+function createStream(stream){
+	remoteStreams.push(stream);
+
+	const div = document.createElement('div')
+	div.className = "lol"
+	const video = document.createElement('video')
+
+	
+	video.srcObject = stream;
+
+	console.log(video)
+	video.controls = true;
+
+	streamToVideo[stream] = video;
+
+	div.append(video)
+	videoGrid.append(div)
+	video.play();
+
+	stream.onremovetrack = k => {
+		if (stream.getTracks().length == 0) {
+			deleteVideo(video)``
+		} else {
+			updateVideo(video,stream)
+		}
+	}
+}
+function onTrack(track,stream){
+	console.log("Track recieved")
+	console.log(stream)
+
+	if (!contains(stream, remoteStreams)) {
+		createStream(stream)
+	}
+
+	streamToVideo[stream].controls = true;
+
+	stream.addTrack(track);
+}
+
+
+async function open(){
 	console.log('Socket is connected')
 
 	connection = new RTCPeerConnection(iceConfig);
@@ -191,55 +244,7 @@ async function onOpen(){
 		}
 	}
 
-	connection.ontrack = event => {
-
-		console.log("Track recieved")
-		var track = event.track;
-		var stream = event.streams[0]
-		console.log(stream)
-
-
-		if (!contains(stream, remoteStreams)) {
-			remoteStreams.push(stream);
-
-			const div = document.createElement('div')
-			div.className = "lol"
-			const video = document.createElement('video')
-
-			
-			video.srcObject = stream;
-
-			console.log(video)
-			video.controls = true;
-
-			streamToVideo[stream] = video;
-
-			div.append(video)
-			videoGrid.append(div)
-			video.play();
-
-			stream.onremovetrack = k => {
-				if (stream.getTracks().length == 0) {
-					video.pause();
-					video.removeAttribute('src'); // empty source
-					video.load();
-					video.remove();
-
-				} else {
-					video.srcObject = stream;
-					video.load();
-					video.play();
-
-					video.controls = true;
-				}
-			}
-
-		}
-
-		streamToVideo[stream].controls = true;
-
-		stream.addTrack(track);
-	}
+	connection.ontrack = event => {onTrack(event.track,event.streams[0])}
 
 
 	send({'room': room}, "joinRoom");
