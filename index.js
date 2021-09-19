@@ -13,8 +13,6 @@ document.title = "Parrot"
 var sock;
 var camera;
 var remoteStreams = []
-var streamToVideo = {}
-
 
 function send(msg, type) {
     if (sock.readyState != WebSocket.OPEN) {
@@ -184,19 +182,23 @@ function createStream(stream){
 	
 	video.srcObject = stream;
 
-	console.log(video)
+	console.log("Stream created")
 	video.controls = true;
-
-	streamToVideo[stream] = video;
 
 	div.append(video)
 	videoGrid.append(div)
 	video.play();
 
+	stream.resetControls = k => {
+		video.controls = true;
+	}
+
 	stream.onremovetrack = k => {
 		if (stream.getTracks().length == 0) {
-			deleteVideo(video)``
+			console.log("Video deleted")
+			deleteVideo(video)
 		} else {
+			console.log("Video updated")
 			updateVideo(video,stream)
 		}
 	}
@@ -209,9 +211,69 @@ function onTrack(track,stream){
 		createStream(stream)
 	}
 
-	streamToVideo[stream].controls = true;
+	stream.resetControls();
 
 	stream.addTrack(track);
+}
+
+function f(id){
+
+	this.on = false;
+	this.tracks;
+	this.senders = [];
+	this.stream;
+
+
+	document.getElementById(id).onclick = async e => {
+		if(this.on){
+			document.getElementById(id).innerHTML = 'Enable Camera'
+
+			this.senders.forEach(sender => connection.removeTrack(sender))
+
+			if(id==='camera'){
+				this.tracks.forEach(track => camera.removeTrack(track))
+				camera.onremovetrack();
+			}
+			if(id==='screen'){
+				this.tracks.forEach(track => this.stream.removeTrack(track))
+				this.stream.onremovetrack();
+			}
+
+		}
+		else{
+			document.getElementById(id).innerHTML = 'Disable Camera'
+
+			if(id==='camera'){
+				var str = await navigator.mediaDevices.getUserMedia({"video":true})
+
+				this.tracks = str.getVideoTracks()
+				this.tracks.forEach(track =>{
+					camera.addTrack(track)
+					onTrack(track,camera)
+					this.senders.push(connection.addTrack(track, camera))
+				})
+				
+			}
+			if(id==='screen'){
+				this.stream = await navigator.mediaDevices.getDisplayMedia({audio: true,video: true})
+
+				this.tracks = this.stream.getVideoTracks()
+				this.tracks.forEach(track =>{
+					onTrack(track,this.stream)
+					this.senders.push(connection.addTrack(track, this.stream))
+				})
+			}
+			
+			
+
+			
+		}
+
+		this.on = !this.on;
+		connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+	}
+
+	
 }
 
 
@@ -224,6 +286,8 @@ async function open(){
 	console.log("Microphone enabled")
 	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
 
+
+	onTrack(camera.getTracks()[0],camera)
 	connection.addTrack(camera.getTracks()[0], camera)
 
 	connection.onconnectionstatechange = async e => {
@@ -254,8 +318,13 @@ async function open(){
 		var s = o.message
 		if (s === 'roomJoined') {
 
-			var d = new createSource('camera');
-			var c = new createSource('screen');
+			// var d = new createSource('camera');
+			// var c = new createSource('screen');
+
+
+			var x = new f('camera');
+			var y = new f('screen');
+
 
 			var clientId = o.order
 
