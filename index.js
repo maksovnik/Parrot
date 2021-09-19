@@ -1,4 +1,5 @@
 const videoGrid = document.getElementById("video-grid");
+const localVideoGrid = document.getElementById("localvideo-grid");
 
 const iceConfig = {
     iceServers: [{
@@ -12,6 +13,8 @@ document.title = "Parrot"
 
 var sock;
 var camera;
+var screen;
+
 var remoteStreams = []
 var streamToVideo = {}
 
@@ -56,7 +59,11 @@ function contains(x, y) {
 function switchDisplay() {
     document.getElementById("camera").style.display = '';
     document.getElementById("screen").style.display = '';
-    document.getElementById("generate").style.display = 'none';
+
+}
+
+function switchone(){
+	document.getElementById("generate").style.display = 'none';
     document.getElementById("label").style.display = 'none';
     document.getElementById("room").style.display = 'none';
 }
@@ -77,44 +84,60 @@ function updateButton(value,id){
 	document.getElementById(id).innerHTML = value +" "+ id
 }
 
-function createSource(id) {
+function createSource(id,func) {
 	this.on = false
 	this.senders = []
 
 	document.getElementById(id).onclick = async e => {
+		
+
 		if (this.on == false) {
-
+			var source = await func();
 			updateButton('Disable',id)
-			if (id === 'screen') {
-				var stre = await getScreen();
-			}
-			if (id === 'camera') {
-				var stre = await getCamera();
-			}
 
-			var tracks = stre.getTracks()
+			var tracks = source.getTracks()
 			tracks.forEach(track => {
-
-				if (id === 'screen') {
-					var sender = connection.addTrack(track, stre)
+				if(id==='camera'){
+					source = camera;
+					
 				}
-				if (id === 'camera') {
-					var sender = connection.addTrack(track, camera)
-				}
-
+				source.addTrack(track)
+				var sender = connection.addTrack(track, source)
 				this.senders.push(sender)
+				updateVideo(streamToVideo[source],source)
+
+				//convert to lambda that runs delete method if deleted for
+				// example onDelete => removetrack(sender)
 			})
 
 
 		} else {
 			updateButton('Enable',id)
 			this.senders.forEach(s => connection.removeTrack(s))
+			if(id=='camera'){
+				await camera.removeTrack(camera.getVideoTracks()[0])
+				updateVideo(streamToVideo[camera],camera)
+			}
+			if(id=='screen'){
+				screen.getTracks().forEach(track =>{
+					screen.removeTrack(track)
+				})
+				deleteVideo(streamToVideo[screen])
+			}
+
+			
+
 
 		}
-
 		this.on = !this.on;
 
-		connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+		if(connection.connectionState==='connected'){
+			connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+		}
+
+
+
+		
 	}
 }
 
@@ -135,7 +158,7 @@ function getAudioOptions(){
 async function connect() {
 
     var room = document.getElementById('room').value
-    switchDisplay();
+    
 
     sock = new WebSocket('ws://127.0.0.1:8765')
 
@@ -195,7 +218,7 @@ function createStream(stream){
 
 	stream.onremovetrack = k => {
 		if (stream.getTracks().length == 0) {
-			deleteVideo(video)``
+			deleteVideo(video)
 		} else {
 			updateVideo(video,stream)
 		}
@@ -217,14 +240,18 @@ function onTrack(track,stream){
 
 async function open(){
 	console.log('Socket is connected')
+	switchone();
 
 	connection = new RTCPeerConnection(iceConfig);
 
-
+	var d = new createSource('camera',getCamera);
+	var c = new createSource('screen',getScreen);
 	console.log("Microphone enabled")
 	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
 
 	connection.addTrack(camera.getTracks()[0], camera)
+
+	onTrack(camera.getAudioTracks()[0],camera)
 
 	connection.onconnectionstatechange = async e => {
 		if (connection.connectionState === 'connected') {
@@ -248,14 +275,15 @@ async function open(){
 
 
 	send({'room': room}, "joinRoom");
-
+	switchDisplay();
 	sock.addEventListener('message', async e => {
 		var o = JSON.parse(e.data)
 		var s = o.message
 		if (s === 'roomJoined') {
 
-			var d = new createSource('camera');
-			var c = new createSource('screen');
+			
+
+
 
 			var clientId = o.order
 
