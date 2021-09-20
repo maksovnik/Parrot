@@ -14,6 +14,8 @@ var sock;
 var camera;
 var remoteStreams = []
 
+var connected=false;
+
 function send(msg, type) {
     if (sock.readyState != WebSocket.OPEN) {
         return;
@@ -22,7 +24,6 @@ function send(msg, type) {
         action: type,
         msg
     }
-    console.log("Message sent")
     sock.send(JSON.stringify(payload))
 }
 
@@ -75,48 +76,6 @@ function updateButton(value,id){
 	document.getElementById(id).innerHTML = value +" "+ id
 }
 
-function createSource(id) {
-	this.on = false
-	this.senders = []
-
-	document.getElementById(id).onclick = async e => {
-		if (this.on == false) {
-
-			updateButton('Disable',id)
-			if (id === 'screen') {
-				var stre = await getScreen();
-			}
-			if (id === 'camera') {
-				var stre = await getCamera();
-			}
-
-			var tracks = stre.getTracks()
-			tracks.forEach(track => {
-
-				if (id === 'screen') {
-					var sender = connection.addTrack(track, stre)
-				}
-				if (id === 'camera') {
-					var sender = connection.addTrack(track, camera)
-				}
-
-				this.senders.push(sender)
-			})
-
-
-		} else {
-			updateButton('Enable',id)
-			this.senders.forEach(s => connection.removeTrack(s))
-
-		}
-
-		this.on = !this.on;
-
-		connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
-	}
-}
-
-
 function getAudioOptions(){
 	return {audio:{
 		autoGainControl: false,
@@ -132,10 +91,10 @@ function getAudioOptions(){
 
 async function connect() {
 
-    var room = document.getElementById('room').value
+    
     switchDisplay();
 
-    sock = new WebSocket('ws://127.0.0.1:8765')
+    sock = new WebSocket('wss://5tkartjbu1.execute-api.eu-west-3.amazonaws.com/production')
 
 
     sock.addEventListener('close', e => console.log('Socket is closed'))
@@ -175,8 +134,6 @@ function updateVideo(video,stream){
 function createStream(stream){
 	remoteStreams.push(stream);
 
-	const div = document.createElement('div')
-	div.className = "lol"
 	const video = document.createElement('video')
 
 	
@@ -185,8 +142,8 @@ function createStream(stream){
 	console.log("Stream created")
 	video.controls = true;
 
-	div.append(video)
-	videoGrid.append(div)
+
+	videoGrid.append(video)
 	video.play();
 
 	stream.resetControls = k => {
@@ -223,54 +180,44 @@ function f(id){
 	this.senders = [];
 	this.stream;
 
+	this.of = {}
 
 	document.getElementById(id).onclick = async e => {
 		if(this.on){
-			document.getElementById(id).innerHTML = 'Enable Camera'
-
+			document.getElementById(id).innerHTML = 'Enable' + id
 			this.senders.forEach(sender => connection.removeTrack(sender))
-
-			if(id==='camera'){
-				this.tracks.forEach(track => camera.removeTrack(track))
-				camera.onremovetrack();
-			}
-			if(id==='screen'){
-				this.tracks.forEach(track => this.stream.removeTrack(track))
-				this.stream.onremovetrack();
-			}
+			this.tracks.forEach(track => this.of[id].removeTrack(track))
+			this.of[id].onremovetrack();
 
 		}
 		else{
-			document.getElementById(id).innerHTML = 'Disable Camera'
+			document.getElementById(id).innerHTML = 'Disable' + id;
 
 			if(id==='camera'){
-				var str = await navigator.mediaDevices.getUserMedia({"video":true})
-
-				this.tracks = str.getVideoTracks()
-				this.tracks.forEach(track =>{
-					camera.addTrack(track)
-					onTrack(track,camera)
-					this.senders.push(connection.addTrack(track, camera))
-				})
-				
+				this.stream = await navigator.mediaDevices.getUserMedia({"video":true})
+				this.of[id] = camera
 			}
+
 			if(id==='screen'){
 				this.stream = await navigator.mediaDevices.getDisplayMedia({audio: true,video: true})
-
-				this.tracks = this.stream.getVideoTracks()
-				this.tracks.forEach(track =>{
-					onTrack(track,this.stream)
-					this.senders.push(connection.addTrack(track, this.stream))
-				})
+				this.of[id] = this.stream ;
 			}
-			
-			
 
-			
+			this.tracks = this.stream.getTracks()
+			this.tracks.forEach(track =>{
+				if(id==='camera'){
+					this.of[id].addTrack(track)
+				}
+				onTrack(track,this.of[id])
+				this.senders.push(connection.addTrack(track, this.of[id]))
+			})
 		}
 
 		this.on = !this.on;
-		connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+		if(connected){
+			connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+		}
+		
 	}
 
 	
@@ -281,6 +228,7 @@ async function open(){
 	console.log('Socket is connected')
 
 	connection = new RTCPeerConnection(iceConfig);
+	var room = document.getElementById('room').value
 
 
 	console.log("Microphone enabled")
@@ -289,6 +237,9 @@ async function open(){
 
 	onTrack(camera.getTracks()[0],camera)
 	connection.addTrack(camera.getTracks()[0], camera)
+
+	var x = new f('camera');
+	var y = new f('screen');
 
 	connection.onconnectionstatechange = async e => {
 		if (connection.connectionState === 'connected') {
@@ -317,13 +268,7 @@ async function open(){
 		var o = JSON.parse(e.data)
 		var s = o.message
 		if (s === 'roomJoined') {
-
-			// var d = new createSource('camera');
-			// var c = new createSource('screen');
-
-
-			var x = new f('camera');
-			var y = new f('screen');
+			connected=true;
 
 
 			var clientId = o.order
