@@ -53,6 +53,7 @@ function contains(x, y) {
 }
 
 function switchDisplay() {
+	document.getElementById("mic").style.display = '';
     document.getElementById("camera").style.display = '';
     document.getElementById("screen").style.display = '';
     document.getElementById("generate").style.display = 'none';
@@ -131,13 +132,14 @@ function updateVideo(video,stream){
 	video.controls = true;
 }
 
-function createStream(stream){
+function createStream(stream,muted=false){
 	remoteStreams.push(stream);
 
 	const video = document.createElement('video')
 
 	
 	video.srcObject = stream;
+	video.muted = muted;
 
 	console.log("Stream created")
 	video.controls = true;
@@ -160,12 +162,12 @@ function createStream(stream){
 		}
 	}
 }
-function onTrack(track,stream){
+function onTrack(track,stream,muted=false){
 	console.log("Track recieved")
 	console.log(stream)
 
 	if (!contains(stream, remoteStreams)) {
-		createStream(stream)
+		createStream(stream,muted)
 	}
 
 	stream.resetControls();
@@ -209,14 +211,20 @@ function f(id){
 					this.of[id].addTrack(track)
 				}
 				onTrack(track,this.of[id])
+				console.log("Hello")
+				console.log(track)
+				console.log(this.of[id])
 				this.senders.push(connection.addTrack(track, this.of[id]))
 			})
 		}
 
 		this.on = !this.on;
+		console.log("hi1")
 		if(connected){
+			console.log("hi2")
 			connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
 		}
+		console.log("hi3")
 		
 	}
 
@@ -229,14 +237,21 @@ async function open(){
 
 	connection = new RTCPeerConnection(iceConfig);
 	var room = document.getElementById('room').value
-
+	
 
 	console.log("Microphone enabled")
 	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
 
 
-	onTrack(camera.getTracks()[0],camera)
-	connection.addTrack(camera.getTracks()[0], camera)
+
+	onTrack(camera.getTracks()[0],camera,true)
+	var sender = connection.addTrack(camera.getTracks()[0], camera)
+
+	document.getElementById('mic').onclick = d=>{
+		var enabled = camera.getAudioTracks()[0].enabled;
+		document.getElementById('mic').innerHTML = enabled ? "Enable Mic" : "Disable Mic"
+		camera.getAudioTracks()[0].enabled = !enabled;
+	}
 
 	var x = new f('camera');
 	var y = new f('screen');

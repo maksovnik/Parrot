@@ -1,6 +1,17 @@
 #video-grid {
-	justify-content: center;
-  display: inline-block
+
+}
+
+
+/* ::-webkit-media-controls-enclosure {
+  border-radius: 5px;
+  background-color: rgb(168, 168, 168);
+} */
+
+body {
+    background-color: #222;
+    color: #e6e6e6;
+    border-color: #e6e6e6;
 }
 
 h1{
@@ -25,7 +36,3 @@ body {
 }
 
 
-video{
-  width: 800px;
-  height: 450px;
-}
