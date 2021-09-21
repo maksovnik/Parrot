@@ -13,6 +13,7 @@ document.title = "Parrot"
 var sock;
 var camera;
 var remoteStreams = []
+var dataconn;
 
 var connected=false;
 
@@ -53,12 +54,8 @@ function contains(x, y) {
 }
 
 function switchDisplay() {
-	document.getElementById("mic").style.display = '';
-    document.getElementById("camera").style.display = '';
-    document.getElementById("screen").style.display = '';
-    document.getElementById("generate").style.display = 'none';
-    document.getElementById("label").style.display = 'none';
-    document.getElementById("room").style.display = 'none';
+	document.getElementById("main").style.display = '';
+    document.getElementById("setup").style.display = 'none';
 }
 
 async function getScreen(){
@@ -210,7 +207,7 @@ function f(id){
 				if(id==='camera'){
 					this.of[id].addTrack(track)
 				}
-				onTrack(track,this.of[id])
+				onTrack(track,this.of[id],true)
 				console.log("Hello")
 				console.log(track)
 				console.log(this.of[id])
@@ -231,7 +228,41 @@ function f(id){
 	
 }
 
+function setupChat(){
 
+
+	dataconn.onmessage = (e,other=true) => {
+		var chatbox = document.getElementById("chatbox")
+
+		var p = document.createElement("p")
+		p.id = 'trash'
+		var message =  e.data;
+		if(other){
+			p.innerHTML = "Friend:"+message
+		}
+		else{
+			p.innerHTML = "You:"+message
+		}
+		chatbox.append(p)
+
+		chatbox.scrollTop = chatbox.scrollHeight;
+	}
+
+	document.getElementById("sendButton").onclick = e =>{
+		var sendBox = document.getElementById("sendBox");
+		var text = sendBox.value
+		sendBox.value = '';
+		dataconn.send(text);
+		var e = {data: text}
+		dataconn.onmessage(e,false);
+	}
+
+	document.getElementById("sendBox").addEventListener("keyup", event => {
+		if (event.code === 'Enter') {
+		  document.getElementById("sendButton").click();
+		}
+	  });
+}
 async function open(){
 	console.log('Socket is connected')
 
@@ -242,7 +273,7 @@ async function open(){
 	console.log("Microphone enabled")
 	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
 
-
+	
 
 	onTrack(camera.getTracks()[0],camera,true)
 	var sender = connection.addTrack(camera.getTracks()[0], camera)
@@ -276,6 +307,12 @@ async function open(){
 
 	connection.ontrack = event => {onTrack(event.track,event.streams[0])}
 
+	connection.ondatachannel = event =>{
+		console.log("Data channel recieved")
+		dataconn = event.channel;
+		setupChat()
+	}
+
 
 	send({'room': room}, "joinRoom");
 
@@ -290,6 +327,8 @@ async function open(){
 
 			if (clientId == 1) {
 				connection.setLocalDescription()
+				dataconn = connection.createDataChannel("dc");
+				setupChat()
 			}
 
 			sock.addEventListener('message', async e => {

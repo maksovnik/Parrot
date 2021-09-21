@@ -13,18 +13,27 @@
     
     <h1 id="peer"></h1>
 
-
-    <label id="label">Room ID:</label>
-    <textarea id="room"></textarea><br/>
-
-
-        <button id="mic" style="display: none;">Disable Mic</button>
-        <button id="camera" style="display: none;">Enable Camera</button>
-        <button id="screen" style="display: none;">Enable Screen</button><br>
+    <div id="setup">
+        <label id="label">Room ID:</label>
+        <textarea id="room"></textarea><br/>
         <button id="generate" onclick="connect()" >Join</button>
+    </div>
+
+    <div style="display: none;" id="main">
+        <button id="mic" >Disable Mic</button>
+        <button id="camera" >Enable Camera</button>
+        <button id="screen" >Enable Screen</button><br>
+
+        <div id="video-grid"></div><br/>
+        <div id="outer">
+            <div id="chatbox"></div>
+            <input id="sendBox">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
 
  
-    <div id="video-grid"></div><br/>
+
 
     <script type="text/javascript" src="index.js" defer></script>
 </body>
