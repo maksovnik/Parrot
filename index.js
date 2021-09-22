@@ -110,7 +110,15 @@ async function connect() {
 
     })
 
+	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
 
+	document.getElementById('mic').onclick = d=>{
+		var enabled = camera.getAudioTracks()[0].enabled;
+		document.getElementById('micI').src = enabled ? 
+			document.getElementById('micI').src = "icons/micOn.png"
+		 : document.getElementById('micI').src = "icons/micOff.png"
+		camera.getAudioTracks()[0].enabled = !enabled;
+	}
     sock.addEventListener('open', e => open())
 
 }
@@ -119,7 +127,7 @@ function deleteVideo(video){
 	video.pause();
 	video.removeAttribute('src'); // empty source
 	video.load();
-	video.remove();
+	videoGrid.removeChild(video.tdiv)
 }
 
 function updateVideo(video,stream){
@@ -134,7 +142,15 @@ function createStream(stream,muted=false){
 	remoteStreams.push(stream);
 
 	const video = document.createElement('video')
+	const posters = ["https://cdnb.artstation.com/p/assets/images/images/014/861/241/large/jose-miranda-srgb-aang-final-con-brillo-jmt.jpg",
+					"https://cdn5.f-cdn.com/ppic/1430815/logo/3508484/creative_colorful_eye-HD.jpg"
+]
+	video.poster = posters[Math.floor(Math.random() * posters.length)];
 
+	const div = document.createElement('div')
+
+	video.tdiv = div;
+	div.id="bo"
 	
 	video.srcObject = stream;
 	video.muted = muted;
@@ -144,6 +160,8 @@ function createStream(stream,muted=false){
 
 
 	videoGrid.append(video)
+	div.append(video)
+	videoGrid.append(div)
 	video.play();
 
 	stream.resetControls = k => {
@@ -184,14 +202,14 @@ function f(id){
 
 	document.getElementById(id).onclick = async e => {
 		if(this.on){
-			document.getElementById(id).innerHTML = 'Enable' + id
+			document.getElementById(id+'I').src = 'icons/' + id + "Off.png";
 			this.senders.forEach(sender => connection.removeTrack(sender))
 			this.tracks.forEach(track => this.of[id].removeTrack(track))
 			this.of[id].onremovetrack();
 
 		}
 		else{
-			document.getElementById(id).innerHTML = 'Disable' + id;
+			document.getElementById(id+'I').src = 'icons/' + id + "On.png";
 
 			if(id==='camera'){
 				this.stream = await navigator.mediaDevices.getUserMedia({"video":true})
@@ -209,7 +227,6 @@ function f(id){
 					this.of[id].addTrack(track)
 				}
 				onTrack(track,this.of[id],true)
-				console.log("Hello")
 				console.log(track)
 				console.log(this.of[id])
 				this.senders.push(connection.addTrack(track, this.of[id]))
@@ -217,12 +234,9 @@ function f(id){
 		}
 
 		this.on = !this.on;
-		console.log("hi1")
 		if(connected){
-			console.log("hi2")
 			connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
 		}
-		console.log("hi3")
 		
 	}
 
@@ -273,18 +287,14 @@ async function open(){
 	
 
 	console.log("Microphone enabled")
-	camera = await navigator.mediaDevices.getUserMedia(getAudioOptions())
+	
 
 	
 
 	onTrack(camera.getTracks()[0],camera,true)
 	var sender = connection.addTrack(camera.getTracks()[0], camera)
 
-	document.getElementById('mic').onclick = d=>{
-		var enabled = camera.getAudioTracks()[0].enabled;
-		document.getElementById('mic').innerHTML = enabled ? "Enable Mic" : "Disable Mic"
-		camera.getAudioTracks()[0].enabled = !enabled;
-	}
+
 
 	var x = new f('camera');
 	var y = new f('screen');

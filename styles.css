@@ -1,8 +1,18 @@
 body,
 html {
 	height: 100vh;
+  background-color: rgb(65, 65, 65);
 }
 
+
+h1{
+  font-size: 50;
+  margin: 10;
+}
+
+img{
+  margin-top: 10px;
+}
 #header{
   display: flex;
 }
@@ -25,14 +35,85 @@ body {
   flex-grow: 1;
   overflow:hidden;  
   align-items: center;
+
+  background-color: #36393f;
+  
+  margin:10px 10px 10px 10px;
+  width: calc(100% - 10px);
+
 }
 
+
+
+#mediaTab{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  background-color: #18191c;
+  padding: 20;
+}
 #chatbox {
 	overflow-y: scroll;
 	width: 100%;
   flex-grow: 1;
   height: 100%;
+  color:white;
+  scroll-margin-left: 100px;
 }
+
+
+#micI,#cameraI,#screenI{
+  background-color: transparent;
+  height:40px;
+  width:40px;
+  display:block;
+  margin:auto;
+  -webkit-filter: invert(100%); /* Safari/Chrome */
+    filter: invert(100%);
+
+}
+
+#mic,#camera,#screen{
+  background-color: transparent;
+  text-align: center;
+  border-radius: 50%;
+  padding: 15;
+  border: none;
+  background-color: #2f3136
+
+}
+
+
+
+#video-grid{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20;
+  
+  flex-grow: 1;
+  overflow-x: auto;
+  width: 100%;
+
+}
+
+#bo{
+
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 0;
+  max-width: 500px;
+  margin: 5;
+  min-width: 500px;
+  
+
+}
+
+video{
+  width: 100%;
+}
+
 
 
 #sendbar{
@@ -40,6 +121,14 @@ body {
   width: 100%;
 }
 
+
+
 #messageInput{
+  border-radius: 10px;
+  outline-style: none;
+  box-shadow: none;
+  background-color: #40444b;
+  color:white;
   flex-grow: 1;
+  padding: 10;
 }

@@ -1,15 +1,19 @@
 <head>
-    <div id="header">
-       <h1 >Parrot</h1>
-       <img width="100" height="100" src="icon.png">
-    </div>
+
     <link rel="stylesheet" type="text/css" href="styles.css">
+    
  </head>
  <body>
   
        <h1 id="peer"></h1>
 
        <div id="setup">
+
+        <div id="header">
+            <h1 >Parrot</h1>
+            <img width="100" height="100" src="icon.png">
+         </div>
+         
           <label id="label">Room ID:</label>
           <textarea id="room"></textarea><br/>
           <br/><button id="generate" onclick="connect()" >Join</button>
@@ -18,14 +22,19 @@
 
        <div style='display: none;' id="call">
         
-            <div>
-                <br/>
-                <button id="mic" >Disable Mic</button>
-                <button id="camera" >Enable Camera</button>
-                <button id="screen" >Enable Screen</button><br>
+
+            <div id="mediaTab">
+                <div id="video-grid"></div>
+
+                <div>
+                    <br/>
+                    <button id="mic" ><img id="micI" src="icons/micOn.png"></button>
+                    <button id="camera" ><img id="cameraI" src="icons/cameraOff.png"></button>
+                    <button id="screen" ><img id="screenI" src="icons/screenOn.png"></button>
+                </div>
+
             </div>
 
-            <div id="video-grid"></div>
             <div id="chatbox"></div>
             
             
