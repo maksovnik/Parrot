@@ -115,8 +115,8 @@ async function connect() {
 	document.getElementById('mic').onclick = d=>{
 		var enabled = camera.getAudioTracks()[0].enabled;
 		document.getElementById('micI').src = enabled ? 
-			document.getElementById('micI').src = "icons/micOn.png"
-		 : document.getElementById('micI').src = "icons/micOff.png"
+			document.getElementById('micI').src = "icons/micOff.png"
+		 : document.getElementById('micI').src = "icons/micOn.png"
 		camera.getAudioTracks()[0].enabled = !enabled;
 	}
     sock.addEventListener('open', e => open())
@@ -263,19 +263,17 @@ function setupChat(){
 		chatbox.scrollTop = chatbox.scrollHeight;
 	}
 
-	document.getElementById("sendButton").onclick = e =>{
-		var messageInput = document.getElementById("messageInput");
-		var text = messageInput.value
-		messageInput.value = '';
-		dataconn.send(text);
-		var e = {data: text}
-		dataconn.onmessage(e,false);
-	}
+
 
 	document.getElementById("messageInput").addEventListener("keyup", event => {
 		console.log("hello")
 		if (event.code === 'Enter') {
-		  document.getElementById("sendButton").click();
+			var messageInput = document.getElementById("messageInput");
+			var text = messageInput.value
+			messageInput.value = '';
+			dataconn.send(text);
+			var e = {data: text}
+			dataconn.onmessage(e,false);
 		}
 	  });
 }
