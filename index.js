@@ -9,6 +9,9 @@ const iceConfig = {
 
 document.title = "Parrot"
 
+var startTime;
+var endTime;
+
 
 var sock;
 var camera;
@@ -26,7 +29,10 @@ function send(msg, type) {
         msg
     }
 	console.log(payload)
-    sock.send(JSON.stringify(payload))
+	var json = JSON.stringify(payload)
+	console.log("Message sent")
+
+    sock.send(json)
 }
 
 async function getConnectionMethod() {
@@ -245,35 +251,53 @@ function f(id){
 
 function setupChat(){
 
+	dataconn.onopen = e=>{
+		connected=true;
+		sock.close();
+	}
 
 	dataconn.onmessage = (e,other=true) => {
 		var chatbox = document.getElementById("chatbox")
 
 		var p = document.createElement("p")
 		p.id = 'trash'
-		var message =  e.data;
-		if(other){
-			p.innerHTML = "Friend:"+message
+		var data = JSON.parse(e.data)
+		var message = JSON.parse(e.data).data;
+		if(data.type === 'message'){
+			
+			if(other){
+				p.innerHTML = "Friend:"+message
+			}
+			else{
+				p.innerHTML = "You:"+message
+			}
+			chatbox.append(p)
+	
+			chatbox.scrollTop = chatbox.scrollHeight;
 		}
-		else{
-			p.innerHTML = "You:"+message
-		}
-		chatbox.append(p)
 
-		chatbox.scrollTop = chatbox.scrollHeight;
+		if(data.type === 'sdp'){
+			var endTime = performance.now()
+			console.log(`Call to doSomething took ${endTime - startTime} milliseconds`)
+
+
+			connection.setRemoteDescription(message).then(a => console.log("Remote Description set"))
+			connection.setLocalDescription()
+		}
+
 	}
 
 
 
 	document.getElementById("messageInput").addEventListener("keyup", event => {
-		console.log("hello")
 		if (event.code === 'Enter') {
 			var messageInput = document.getElementById("messageInput");
 			var text = messageInput.value
 			messageInput.value = '';
-			dataconn.send(text);
-			var e = {data: text}
-			dataconn.onmessage(e,false);
+			var msg = {type:"message",data:text}
+			dataconn.send(JSON.stringify(msg));
+			var event = {data:JSON.stringify(msg)}
+			dataconn.onmessage(event,false);
 		}
 	  });
 }
@@ -307,11 +331,24 @@ async function open(){
 		console.log("New ICE Candidate!")
 	}
 
+
+
 	connection.onicegatheringstatechange = e => {
+		console.log("123908")
 		if (connection.iceGatheringState === 'complete') {
 			console.log("Ice Gathering complete")
 			var sdp = connection.localDescription.toJSON()
-			send(sdp, 'signal')
+			console.log()
+			if(connected&&dataconn!=undefined){
+				var message = {type:"sdp",data:sdp}
+				var package = JSON.stringify(message)
+				startTime = performance.now()
+				dataconn.send(package)
+			}
+			else{
+				send(sdp, 'signal')
+			}
+			
 		}
 	}
 
@@ -327,12 +364,11 @@ async function open(){
 	send({'room': room}, "joinRoom");
 
 	sock.addEventListener('message', async e => {
+		
 		var o = JSON.parse(e.data)
 		var s = o.message
 		if (s === 'roomJoined') {
-			connected=true;
-
-
+		
 			var clientId = o.order
 
 			if (clientId == 1) {
@@ -343,10 +379,8 @@ async function open(){
 
 			sock.addEventListener('message', async e => {
 				var s = JSON.parse(e.data)
-				if (s.type === 'offer' || s.type === 'answer') {
-					connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
-					connection.setLocalDescription()
-				}
+				connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
+				connection.setLocalDescription()
 			})
 		}
 	})
