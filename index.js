@@ -25,6 +25,7 @@ function send(msg, type) {
         action: type,
         msg
     }
+	console.log(payload)
     sock.send(JSON.stringify(payload))
 }
 
@@ -54,7 +55,7 @@ function contains(x, y) {
 }
 
 function switchDisplay() {
-	document.getElementById("main").style.display = '';
+	document.getElementById("call").style.display = '';
     document.getElementById("setup").style.display = 'none';
 }
 
@@ -249,15 +250,16 @@ function setupChat(){
 	}
 
 	document.getElementById("sendButton").onclick = e =>{
-		var sendBox = document.getElementById("sendBox");
-		var text = sendBox.value
-		sendBox.value = '';
+		var messageInput = document.getElementById("messageInput");
+		var text = messageInput.value
+		messageInput.value = '';
 		dataconn.send(text);
 		var e = {data: text}
 		dataconn.onmessage(e,false);
 	}
 
-	document.getElementById("sendBox").addEventListener("keyup", event => {
+	document.getElementById("messageInput").addEventListener("keyup", event => {
+		console.log("hello")
 		if (event.code === 'Enter') {
 		  document.getElementById("sendButton").click();
 		}

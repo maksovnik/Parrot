@@ -1,75 +1,45 @@
-#video-grid {
-
+body,
+html {
+	height: 100vh;
 }
 
-
-/* ::-webkit-media-controls-enclosure {
-  border-radius: 5px;
-  background-color: rgb(168, 168, 168);
-} */
-
-body {
-    background-color: #222;
-    color: #e6e6e6;
-    border-color: #e6e6e6;
-}
-
-h1{
-  font-size: 100%;
-  font-size: 50px;
-}
-body {
-
-	margin: 20px;
-  font-size: 150%;
-	text-align: center;
-}
-
-.content {
+#header{
   display: flex;
-  justify-content: center;
-  margin-bottom: -30;
 }
 
-.content img{
-  margin-top: 10;
+body {
+  align-items: center;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+
 }
 
+#setup{
+  text-align: center;
+}
 
-#outer {
-  width: 500px;
-  height: 500px;
-  background-color: rgb(53, 53, 53);
-  margin-left: auto;
-  margin-right: auto;
-  position: relative;
+#call{
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow:hidden;  
+  align-items: center;
 }
 
 #chatbox {
+	overflow-y: scroll;
+	width: 100%;
+  flex-grow: 1;
+  height: 100%;
+}
+
+
+#sendbar{
+  display: flex;
   width: 100%;
-  height:100%;
-  overflow: scroll;
-
 }
 
-#sendBox{
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 90%;
-}
-
-.main{
-  display: none !important;
-}
-
-#sendButton{
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 10%;
-}
-
-#trash{
-  text-align: left;
+#messageInput{
+  flex-grow: 1;
 }

@@ -1,39 +1,40 @@
-
 <head>
-    <div class="content">
-        <h1 >Parrot</h1>
-        <img width="100" height="100" src="icon.png">
+    <div id="header">
+       <h1 >Parrot</h1>
+       <img width="100" height="100" src="icon.png">
     </div>
-    
     <link rel="stylesheet" type="text/css" href="styles.css">
+ </head>
+ <body>
+  
+       <h1 id="peer"></h1>
+
+       <div id="setup">
+          <label id="label">Room ID:</label>
+          <textarea id="room"></textarea><br/>
+          <br/><button id="generate" onclick="connect()" >Join</button>
+       </div>
 
 
-</head>
-<body>
-    
-    <h1 id="peer"></h1>
+       <div style='display: none;' id="call">
+        
+            <div>
+                <br/>
+                <button id="mic" >Disable Mic</button>
+                <button id="camera" >Enable Camera</button>
+                <button id="screen" >Enable Screen</button><br>
+            </div>
 
-    <div id="setup">
-        <label id="label">Room ID:</label>
-        <textarea id="room"></textarea><br/>
-        <button id="generate" onclick="connect()" >Join</button>
-    </div>
-
-    <div style="display: none;" id="main">
-        <button id="mic" >Disable Mic</button>
-        <button id="camera" >Enable Camera</button>
-        <button id="screen" >Enable Screen</button><br>
-
-        <div id="video-grid"></div><br/>
-        <div id="outer">
+            <div id="video-grid"></div>
             <div id="chatbox"></div>
-            <input id="sendBox">
-            <button id="sendButton">Send</button>
+            
+            
+
+            <div id="sendbar">
+                <input id="messageInput">
+                <button id="sendButton">Send</button>  
+            </div>
         </div>
-    </div>
-
- 
-
 
     <script type="text/javascript" src="index.js" defer></script>
-</body>
+ </body>
