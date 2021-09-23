@@ -5,10 +5,38 @@ html {
 	margin: 0;
 }
 
+
+body {
+	align-items: center;
+	margin: 0;
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+}
+
 h1 {
-	font-size: 50;
+	font-size: 100px;
+	height: 100px;
+	line-height: 100px;
+	text-align: center;
 	margin: 0;
 }
+
+label{
+	margin:5px;
+	font-size: 30px;
+}
+
+#roomS{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#generate{
+	font-size: 50px;;
+}
+
 
 img {
 	margin-top: 10px;
@@ -16,17 +44,17 @@ img {
 
 #header {
 	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
-body {
-	align-items: center;
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-}
+
 
 #setup {
 	text-align: center;
+	padding: 100 200 100 200;
+	background-color: rgb(37, 37, 37);
+	margin: 5%;
 }
 
 #call {
@@ -35,8 +63,9 @@ body {
 	flex-grow: 1;
 	overflow: hidden;
 	align-items: center;
+	
 	width: calc(100% - 10px);
-  margin-bottom: 20px;
+  	margin-bottom: 20px;
 
 }
 
@@ -46,7 +75,7 @@ body {
 	align-items: center;
 	width: 100%;
 	background-color: #18191c;
-  padding-bottom: 20px;
+  	padding-bottom: 20px;
   
 }
 
@@ -95,23 +124,26 @@ body {
 
 #video-grid {
 	display: flex;
-	justify-content: center;
-	align-items: center;
 	flex-grow: 1;
 	overflow-x: auto;
 	width: 100%;
-
+	
 }
 
 #bo {
 	display: flex;
 	flex-grow: 1;
-	flex-basis: 0;
+	margin: 20px;
 	max-width: 500px;
 	min-width: 500px;
-  margin: 20px;
+}
+#bo:first-child {
+	margin-left: auto;
 }
 
+#bo:last-child {
+	margin-right: auto;
+}
 video {
 	width: 100%;
 }

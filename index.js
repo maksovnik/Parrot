@@ -28,7 +28,6 @@ function send(msg, type) {
         action: type,
         msg
     }
-	console.log(payload)
 	var json = JSON.stringify(payload)
 	console.log("Message sent")
 
@@ -186,8 +185,6 @@ function createStream(stream,muted=false){
 }
 function onTrack(track,stream,muted=false){
 	console.log("Track recieved")
-	console.log(stream)
-
 	if (!contains(stream, remoteStreams)) {
 		createStream(stream,muted)
 	}
@@ -233,8 +230,6 @@ function f(id){
 					this.of[id].addTrack(track)
 				}
 				onTrack(track,this.of[id],true)
-				console.log(track)
-				console.log(this.of[id])
 				this.senders.push(connection.addTrack(track, this.of[id]))
 			})
 		}
@@ -252,6 +247,7 @@ function f(id){
 function setupChat(){
 
 	dataconn.onopen = e=>{
+		console.log("Data Conn opened")
 		connected=true;
 		sock.close();
 	}
@@ -278,9 +274,7 @@ function setupChat(){
 
 		if(data.type === 'sdp'){
 			var endTime = performance.now()
-			console.log(`Call to doSomething took ${endTime - startTime} milliseconds`)
-
-
+			console.log(`${endTime - startTime}ms signalling delay`)
 			connection.setRemoteDescription(message).then(a => console.log("Remote Description set"))
 			connection.setLocalDescription()
 		}
@@ -328,20 +322,23 @@ async function open(){
 	}
 
 	connection.onicecandidate = e => {
-		console.log("New ICE Candidate!")
+		if(connection.iceGatheringState==='gathering'){
+			console.log("New ICE Candidate!")
+		}
+		
 	}
 
 
 
 	connection.onicegatheringstatechange = e => {
-		console.log("123908")
 		if (connection.iceGatheringState === 'complete') {
 			console.log("Ice Gathering complete")
 			var sdp = connection.localDescription.toJSON()
 			console.log()
-			if(connected&&dataconn!=undefined){
+			if(connected){
 				var message = {type:"sdp",data:sdp}
 				var package = JSON.stringify(message)
+				console.log("Sending message")
 				startTime = performance.now()
 				dataconn.send(package)
 			}
@@ -372,15 +369,20 @@ async function open(){
 			var clientId = o.order
 
 			if (clientId == 1) {
-				connection.setLocalDescription()
 				dataconn = connection.createDataChannel("dc");
+				connection.setLocalDescription()
 				setupChat()
 			}
 
 			sock.addEventListener('message', async e => {
 				var s = JSON.parse(e.data)
-				connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
-				connection.setLocalDescription()
+				if(s.type=='offer'||s.type=='answer'){
+					connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
+					if(clientId==2){
+						connection.setLocalDescription()
+					}
+					
+				}
 			})
 		}
 	})
