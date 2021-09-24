@@ -16,6 +16,10 @@ var i1;
 var i2;
 
 
+var l1;
+var l2;
+
+
 var sock;
 var camera;
 var remoteStreams = []
@@ -24,6 +28,9 @@ var dataconn;
 var newCandidates = []
 
 var connected=false;
+
+
+var id;
 
 function send(msg, type) {
     if (sock.readyState != WebSocket.OPEN) {
@@ -279,9 +286,29 @@ function setupChat(){
 		console.log("Data Conn opened")
 		connected=true;
 		sock.close();
+
+
+		// var msg = {type:"message",data:text}
+
+		if(id==1){
+			l1 = performance.now();
+			dataconn.send("");
+		}
+
+
 	}
 
 	dataconn.onmessage = async (e,other=true) => {
+
+		if(id==2){
+			dataconn.send("");
+		}
+
+		if(id==1){
+			l2 = performance.now()
+			console.log(`BIG IMPORTANT:${l2-l1}ms`)
+		}
+		
 		
 		var chatbox = document.getElementById("chatbox")
 
@@ -435,6 +462,7 @@ async function open(){
 		if (s === 'roomJoined') {
 		
 			var clientId = o.order
+			id = clientId;
 
 			if (clientId == 1) {
 				dataconn = connection.createDataChannel("dc");
