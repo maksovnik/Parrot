@@ -12,11 +12,16 @@ document.title = "Parrot"
 var startTime;
 var endTime;
 
+var i1;
+var i2;
+
 
 var sock;
 var camera;
 var remoteStreams = []
 var dataconn;
+
+var newCandidates = []
 
 var connected=false;
 
@@ -48,6 +53,7 @@ async function getConnectionMethod() {
         }
 
     var result = stats.get(selectedLocalCandidate).candidateType
+	var delay = stats.get(selectedLocalCandidate).candidateType
     return result
 }
 
@@ -58,6 +64,29 @@ function contains(x, y) {
         return true
     }
 }
+
+async function getRtp(){
+	connection.getStats(null).then(stats => {
+		var statsOutput = "";
+	
+		stats.forEach(report => {
+			if(report.type === 'candidate-pair'){
+				if(report.nominated){
+					var s = report.currentRoundTripTime
+					if(s!=undefined){
+						console.log("Latency:"+s*1000+"ms")
+					}
+				
+				}
+			}
+			if(report.type === 'remote-inbound-rtp'){
+				console.log("Inbound:"+report.roundTripTime*1000+'ms')
+			}
+		});
+	
+	  });
+}
+
 
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
@@ -252,7 +281,8 @@ function setupChat(){
 		sock.close();
 	}
 
-	dataconn.onmessage = (e,other=true) => {
+	dataconn.onmessage = async (e,other=true) => {
+		
 		var chatbox = document.getElementById("chatbox")
 
 		var p = document.createElement("p")
@@ -273,10 +303,20 @@ function setupChat(){
 		}
 
 		if(data.type === 'sdp'){
+
 			var endTime = performance.now()
-			console.log(`${endTime - startTime}ms signalling delay`)
+			
+			console.log(`Signalling Delay:${endTime - startTime}ms`)
+
 			connection.setRemoteDescription(message).then(a => console.log("Remote Description set"))
-			connection.setLocalDescription()
+			
+			console.log(message)
+			if(message.type==='offer'){
+				console.log("Ran");
+				connection.setLocalDescription(await connection.createAnswer())
+			}
+			
+
 		}
 
 	}
@@ -318,10 +358,17 @@ async function open(){
 	connection.onconnectionstatechange = async e => {
 		if (connection.connectionState === 'connected') {
 			console.log("Connected via:" + await getConnectionMethod())
+			// debugger;
+			await getRtp()
+			
 		}
 	}
 
 	connection.onicecandidate = e => {
+		
+		if(e.candidate!=null){
+			newCandidates.push(1)
+		}
 		if(connection.iceGatheringState==='gathering'){
 			console.log("New ICE Candidate!")
 		}
@@ -331,8 +378,25 @@ async function open(){
 
 
 	connection.onicegatheringstatechange = e => {
+
+
+		if (connection.iceGatheringState === 'gathering') {
+			console.log("Gathering ICE")
+			i1 = performance.now();
+		}
+		
 		if (connection.iceGatheringState === 'complete') {
+			i2 = performance.now();
+
+			console.log(`ice Delay:${i2-i1}ms`)
+
+
+			if(newCandidates.length==0){
+				return;
+			}
+
 			console.log("Ice Gathering complete")
+
 			var sdp = connection.localDescription.toJSON()
 			console.log()
 			if(connected){
@@ -346,7 +410,11 @@ async function open(){
 				send(sdp, 'signal')
 			}
 			
+
+			newCandidates = [];
 		}
+
+		
 	}
 
 	connection.ontrack = event => {onTrack(event.track,event.streams[0])}
@@ -360,7 +428,7 @@ async function open(){
 
 	send({'room': room}, "joinRoom");
 
-	sock.addEventListener('message', async e => {
+	sock.addEventListener('message', e => {
 		
 		var o = JSON.parse(e.data)
 		var s = o.message
@@ -373,8 +441,9 @@ async function open(){
 				connection.setLocalDescription()
 				setupChat()
 			}
+			
 
-			sock.addEventListener('message', async e => {
+			sock.addEventListener('message', e => {
 				var s = JSON.parse(e.data)
 				if(s.type=='offer'||s.type=='answer'){
 					connection.setRemoteDescription(s).then(a => console.log("Remote Description set"))
