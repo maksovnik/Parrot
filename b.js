@@ -1,5 +1,14 @@
+const iceConfig = {
+    iceServers: [{
+        urls: 'stun:stun.l.google.com:19302'
+    }]
+}
 
-var connection = new RTCPeerConnection();
+var connection = new RTCPeerConnection(iceConfig);
+
+
+
+
 
 var dataconn = connection.createDataChannel("dc");
 
