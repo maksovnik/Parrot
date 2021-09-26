@@ -6,12 +6,6 @@ const iceConfig = {
 	}]
 }
 
-
-var connectButton = document.getElementById("generate")
-document.title = "Parrot"
-
-
-
 var camera;
 var streams = []
 
@@ -23,9 +17,7 @@ var newCandidates = []
 var connected = false;
 
 function send(msg, type) {
-	if (sock.readyState != WebSocket.OPEN) {
-		return;
-	}
+
 	const payload = {
 		action: type,
 		msg
@@ -33,7 +25,18 @@ function send(msg, type) {
 	var json = JSON.stringify(payload)
 	console.log("Message sent")
 
-	sock.send(json)
+	if(connected){
+		dataconn.send(json)
+	}
+	else{
+
+		if (sock.readyState != WebSocket.OPEN) {
+			return;
+		}
+		
+		sock.send(json)
+	}
+	
 }
 
 async function getConnectionMethod() {
@@ -281,6 +284,20 @@ function f(id) {
 
 }
 
+function addMessage(message,other=true){
+	var chatbox = document.getElementById("chatbox")
+	var p = document.createElement("p")
+	if (other) {
+		p.innerHTML = "Friend:" + message
+	} else {
+		p.innerHTML = "You:" + message
+	}
+	chatbox.append(p)
+
+	chatbox.scrollTop = chatbox.scrollHeight;
+
+}
+
 function setupChat() {
 
 	dataconn.onopen = e => {
@@ -289,34 +306,20 @@ function setupChat() {
 		sock.close();
 	}
 
-	dataconn.onmessage = async(e, other = true) => {
+	dataconn.onmessage = async e => {
 
-		var chatbox = document.getElementById("chatbox")
-
-		var p = document.createElement("p")
-		p.id = 'trash'
 		var data = JSON.parse(e.data)
-		var message = JSON.parse(e.data).data;
-		if (data.type === 'message') {
+		var message = data.msg;
 
-			if (other) {
-				p.innerHTML = "Friend:" + message
-			} else {
-				p.innerHTML = "You:" + message
-			}
-			chatbox.append(p)
-
-			chatbox.scrollTop = chatbox.scrollHeight;
+		if(data.action === 'message'){
+			addMessage(message)
 		}
 
-		if (data.type === 'sdp') {
-
+		if (data.action === 'signal') {
 
 			connection.setRemoteDescription(message).then(a => console.log("Remote Description set"))
 
-			console.log(message)
 			if (message.type === 'offer') {
-				console.log("Ran");
 				connection.setLocalDescription(await connection.createAnswer())
 			}
 
@@ -330,16 +333,14 @@ function setupChat() {
 		if (event.code === 'Enter') {
 			var messageInput = document.getElementById("messageInput");
 			var text = messageInput.value
+			
+			send(text,"message")
+			addMessage(text,false)
+
 			messageInput.value = '';
-			var msg = {
-				type: "message",
-				data: text
-			}
-			dataconn.send(JSON.stringify(msg));
-			var event = {
-				data: JSON.stringify(msg)
-			}
-			dataconn.onmessage(event, false);
+
+
+
 		}
 	});
 }
@@ -364,7 +365,6 @@ async function open() {
 		if (connection.connectionState === 'connected') {
 			console.log("Connected via:" + await getConnectionMethod())
 			await getRtp()
-
 		}
 	}
 
@@ -397,18 +397,8 @@ async function open() {
 			console.log("Ice Gathering complete")
 
 			var sdp = connection.localDescription.toJSON()
-			console.log()
-			if (connected) {
-				var message = {
-					type: "sdp",
-					data: sdp
-				}
-				var package = JSON.stringify(message)
-				console.log("Sending message")
-				dataconn.send(package)
-			} else {
-				send(sdp, 'signal')
-			}
+
+			send(sdp, 'signal')
 
 
 			newCandidates = [];
