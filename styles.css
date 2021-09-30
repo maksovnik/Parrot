@@ -139,8 +139,8 @@ img {
 	display: flex;
 	flex-grow: 1;
 	margin: 20px;
-	max-width: 500px;
-	min-width: 500px;
+	max-width: 750px;
+	min-width: 750px;
 }
 #bo:first-child {
 	margin-left: auto;

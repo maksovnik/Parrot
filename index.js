@@ -306,6 +306,8 @@ function setupChat() {
 		sock.close();
 	}
 
+
+
 	dataconn.onmessage = async e => {
 
 		var data = JSON.parse(e.data)
@@ -379,10 +381,15 @@ async function open() {
 
 	}
 
+	connection.oniceconnectionstatechange = e => {
+		if(connection.iceConnectionState == 'disconnected') {
+			console.log("Disconnected")
+		}
+	}
 
 	connection.onicegatheringstatechange = e => {
 
-
+		console.log(connection.iceGatheringState)
 		if (connection.iceGatheringState === 'gathering') {
 			console.log("Gathering ICE")
 		}
