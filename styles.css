@@ -1,9 +1,33 @@
 body,
 html {
 	height: 100vh;
-	background-color: rgb(51, 51, 51);
+	background: rgb(42,48,115);
+	background: linear-gradient(45deg, rgb(40, 49, 149) 0%, rgba(106,119,252,1) 100%);
 	margin: 0;
 }
+
+body.colored {
+	background: red;
+}
+
+
+
+
+
+
+@font-face {
+	font-family: 'Product Sans';
+	font-style: normal;
+
+	src: local('Open Sans'), local('OpenSans'), url(https://fonts.gstatic.com/s/productsans/v5/HYvgU2fE2nRJvZ5JFAumwegdm0LZdjqr5-oayXSOefg.woff2)
+	 format('woff2');
+  }
+
+
+* {
+	font-size: 100%;
+	font-family: Product Sans;
+   }
 
 
 body {
@@ -28,16 +52,20 @@ label{
 	color: white;
 }
 
-#roomS{
-	display: flex;
-	align-items: center;
-	justify-content: center;
+#room{
+	font-size: 20px;
+	line-height: 30px;
+	height: 30px;
+	border-radius: 10px;
+	padding: 10px;
 }
 
 #generate{
-	font-size: 50px;
+	font-size: 30px;
 	color: white;
-	background-color: rgb(46, 46, 46);
+	padding: 0;
+	border: none;
+	background: none;
 }
 
 
@@ -50,16 +78,19 @@ img {
 	align-items: center;
 	justify-content: center;
 	color: white;
-
+	margin-left: 20px;
+	margin-bottom: 20px;
 }
 
 
 
 #setup {
 	text-align: center;
-	padding: 100 200 100 200;
-	background-color: rgb(37, 37, 37);
+	padding: 100 130 100 130;
+	background-color: #36393f;
 	margin: 5%;
+	border-radius: 50px;
+
 }
 
 #call {

@@ -347,6 +347,9 @@ function setupChat() {
 	});
 }
 async function open() {
+
+	console.log("sdfiujh")
+	document.body.style.background = '#333333'
 	console.log('Socket is connected')
 
 	connection = new RTCPeerConnection(iceConfig);
@@ -442,6 +445,8 @@ async function open() {
 				connection.setLocalDescription()
 				setupChat()
 			}
+
+
 
 
 			sock.addEventListener('message', e => {
