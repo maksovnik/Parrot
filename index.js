@@ -249,15 +249,35 @@ function f(id) {
 
 			if (id === 'camera') {
 				this.stream = await navigator.mediaDevices.getUserMedia({
-					"video": true
+					video: true,
+					audio: {
+						autoGainControl: false,
+						channelCount: 2,
+						echoCancellation: false,
+						latency: 0,
+						noiseSuppression: false,
+						sampleRate: 48000,
+						sampleSize: 16,
+						volume: 1.0
+					}
 				})
 				this.of[id] = camera
 			}
 
 			if (id === 'screen') {
 				this.stream = await navigator.mediaDevices.getDisplayMedia({
-					audio: true,
-					video: true
+					video: true,
+					audio: {
+						autoGainControl: false,
+						channelCount: 2,
+						echoCancellation: false,
+						latency: 0,
+						noiseSuppression: false,
+						sampleRate: 48000,
+						sampleSize: 16,
+						volume: 1.0
+					}
+					
 				})
 				this.of[id] = this.stream;
 			}
@@ -361,6 +381,7 @@ async function open() {
 
 	onTrack(camera.getTracks()[0], camera, true)
 	var sender = connection.addTrack(camera.getTracks()[0], camera)
+	console.log(sender)
 
 
 	var x = new f('camera');
