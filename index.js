@@ -237,15 +237,23 @@ function f(id) {
 
 	this.of = {}
 
+    if(id == "screen"){
+        document.getElementById('clrscreen').onclick = async e => {
+            this.senders.forEach(sender => connection.removeTrack(sender))
+            this.tracks.forEach(track => this.of[id].removeTrack(track))
+            this.of[id].onremovetrack();
+        }
+    }
+
 	document.getElementById(id).onclick = async e => {
-		if (this.on) {
-			document.getElementById(id + 'I').src = 'icons/' + id + "Off.png";
+		if (this.on && id == 'camera') {
+			//document.getElementById(id + 'I').src = 'icons/' + id + "Off.png";
 			this.senders.forEach(sender => connection.removeTrack(sender))
 			this.tracks.forEach(track => this.of[id].removeTrack(track))
 			this.of[id].onremovetrack();
 
 		} else {
-			document.getElementById(id + 'I').src = 'icons/' + id + "On.png";
+			//document.getElementById(id + 'I').src = 'icons/' + id + "On.png";
 
 			if (id === 'camera') {
 				this.stream = await navigator.mediaDevices.getUserMedia({
