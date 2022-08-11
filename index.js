@@ -7,10 +7,17 @@ const iceConfig = {
 }
 
 var camera;
+var camOn = false;
 var streams = []
 
+
+var screens = [];
+var remoteScreens = [];
+
+var remoteCam;
 var sock;
 var dataconn;
+
 
 var newCandidates = []
 
@@ -228,88 +235,98 @@ function onTrack(track, stream, muted = false) {
 	stream.addTrack(track);
 }
 
-function f(id) {
+function f() {
 
-	this.on = false;
-	this.tracks;
-	this.senders = [];
-	this.stream;
-
-	this.of = {}
-
-    if(id == "screen"){
-        document.getElementById('clrscreen').onclick = async e => {
-            this.senders.forEach(sender => connection.removeTrack(sender))
-            this.tracks.forEach(track => this.of[id].removeTrack(track))
-            this.of[id].onremovetrack();
+    document.getElementById('camera').onclick = async e => {
+        if(camOn){
+            connection.removeTrack(remoteCam)
+            camera.removeTrack(camera.getVideoTracks()[0])
+            camera.onremovetrack();
         }
-    }
+        else{
+            var newCam = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: {
+                    autoGainControl: false,
+                    channelCount: 2,
+                    echoCancellation: false,
+                    latency: 0,
+                    noiseSuppression: false,
+                    sampleRate: 48000,
+                    sampleSize: 16,
+                    volume: 1.0
+                }
+            })
 
-	document.getElementById(id).onclick = async e => {
-		if (this.on && id == 'camera') {
-			//document.getElementById(id + 'I').src = 'icons/' + id + "Off.png";
-			this.senders.forEach(sender => connection.removeTrack(sender))
-			this.tracks.forEach(track => this.of[id].removeTrack(track))
-			this.of[id].onremovetrack();
+            var vidTrack = newCam.getVideoTracks()[0]
+			onTrack(vidTrack, camera, true)
+            remoteCam = connection.addTrack(vidTrack, camera)
+        }
 
-		} else {
-			//document.getElementById(id + 'I').src = 'icons/' + id + "On.png";
 
-			if (id === 'camera') {
-				this.stream = await navigator.mediaDevices.getUserMedia({
-					video: true,
-					audio: {
-						autoGainControl: false,
-						channelCount: 2,
-						echoCancellation: false,
-						latency: 0,
-						noiseSuppression: false,
-						sampleRate: 48000,
-						sampleSize: 16,
-						volume: 1.0
-					}
-				})
-				this.of[id] = camera
-			}
 
-			if (id === 'screen') {
-				this.stream = await navigator.mediaDevices.getDisplayMedia({
-					video: true,
-					audio: {
-						autoGainControl: false,
-						channelCount: 2,
-						echoCancellation: false,
-						latency: 0,
-						noiseSuppression: false,
-						sampleRate: 48000,
-						sampleSize: 16,
-						volume: 1.0
-					}
-					
-				})
-				this.of[id] = this.stream;
-			}
+        camOn = !camOn;
 
-			this.tracks = this.stream.getTracks()
-			this.tracks.forEach(track => {
-				if (id === 'camera') {
-					this.of[id].addTrack(track)
-				}
-				onTrack(track, this.of[id], true)
-				this.senders.push(connection.addTrack(track, this.of[id]))
-			})
-		}
 
-		this.on = !this.on;
-		if (connected) {
+        if (connected) {
 			connection.setLocalDescription(await connection.createOffer({
 				iceRestart: true
 			}))
 		}
+        
+    }
 
-	}
+    document.getElementById('addScreen').onclick = async e => {
+        screen = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: {
+                autoGainControl: false,
+                channelCount: 2,
+                echoCancellation: false,
+                latency: 0,
+                noiseSuppression: false,
+                sampleRate: 48000,
+                sampleSize: 16,
+                volume: 1.0
+            }
+            
+        })
+        screens.push(screen)
 
+        
+        tracks = screen.getTracks()
+        tracks.forEach(track => {
+            onTrack(track, screen, true)
+            remoteScreens.push(connection.addTrack(track, screen))
+        })
 
+        if (connected) {
+			connection.setLocalDescription(await connection.createOffer({
+				iceRestart: true
+			}))
+		}
+    }
+
+		
+    document.getElementById('clrScreens').onclick = async e => {
+
+        remoteScreens.forEach(remoteScreen =>{
+            connection.removeTrack(remoteScreen)
+        })
+
+        screens.forEach(screen =>{
+            screen.getTracks().forEach(track =>{
+                screen.removeTrack(track)
+                screen.onremovetrack();
+            })
+        })
+        
+        if (connected) {
+			connection.setLocalDescription(await connection.createOffer({
+				iceRestart: true
+			}))
+		}
+    }
 }
 
 function addMessage(message,other=true){
@@ -348,11 +365,7 @@ function setupChat() {
 		if (data.action === 'signal') {
 
 			connection.setRemoteDescription(message).then(a => console.log("Remote Description set"))
-
-			if (message.type === 'offer') {
-				connection.setLocalDescription(await connection.createAnswer())
-			}
-
+			if (message.type === 'offer') {connection.setLocalDescription(await connection.createAnswer())}
 
 		}
 
@@ -392,8 +405,7 @@ async function open() {
 	console.log(sender)
 
 
-	var x = new f('camera');
-	var y = new f('screen');
+	var x = new f();
 
 	connection.onconnectionstatechange = async e => {
 		if (connection.connectionState === 'connected') {

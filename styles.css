@@ -150,8 +150,8 @@ img {
 
 #mic,
 #camera,
-#screen,
-#clrscreen{
+#addScreen,
+#clrScreens{
 	background-color: transparent;
 	text-align: center;
 	border-radius: 50%;
