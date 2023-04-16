@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/maksovnik/Parrot#readme",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "websocket": "^1.0.34",
+    "ws": "^8.13.0"
   }
 }
