@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/maksovnik/Parrot/issues"
   },
-  "homepage": "https://github.com/maksovnik/Parrot#readme"
+  "homepage": "https://github.com/maksovnik/Parrot#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
