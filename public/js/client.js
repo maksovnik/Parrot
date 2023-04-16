@@ -5,6 +5,8 @@ var room = ""
 var connection;
 var socket;
 
+const videoGrid = document.getElementById("video-grid");
+
 var audioOptions = 
 	{
 		audio: {
@@ -24,6 +26,7 @@ function switchDisplay() {
 	document.getElementById("setup").style.display = 'none';
     console.log("Display Switching")
 }
+
 
 function connect(){
     room = document.getElementById("room").value
@@ -114,6 +117,61 @@ async function begin(){
             
 		}
     }
+
+
+    function createStream(stream, muted = false) {
+    
+        const video = document.createElement('video')
+        const posters = ["https://cdnb.artstation.com/p/assets/images/images/014/861/241/large/jose-miranda-srgb-aang-final-con-brillo-jmt.jpg",
+            "https://cdn5.f-cdn.com/ppic/1430815/logo/3508484/creative_colorful_eye-HD.jpg"
+        ]
+        video.poster = posters[Math.floor(Math.random() * posters.length)];
+    
+        const div = document.createElement('div')
+    
+        video.tdiv = div;
+        div.id = "bo"
+    
+        video.srcObject = stream;
+        video.muted = muted;
+    
+        console.log("Stream created")
+        video.controls = true;
+    
+    
+        videoGrid.append(video)
+        div.append(video)
+        videoGrid.append(div)
+        video.play();
+    
+        stream.resetControls = k => {
+            video.controls = true;
+        }
+    
+        stream.onremovetrack = k => {
+            if (stream.getTracks().length == 0) {
+                console.log("Video deleted")
+                deleteVideo(video)
+            } else {
+                console.log("Video updated")
+                updateVideo(video, stream)
+            }
+        }
+    }
+
+
+    connection.ontrack = event => {
+        var track = event.track
+        var stream = event.streams[0]
+
+        console.log("Track recieved")
+
+        createStream(stream)
+        stream.resetControls();
+        stream.addTrack(track);
+
+	}
+
     console.log("setup complete")
 
     
