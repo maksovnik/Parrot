@@ -32,18 +32,15 @@ wss.on('connection', function connection(ws) {
 
     q = JSON.parse(message.toString())
     console.log("Message received of time "+ q.type)
+    
+    if(['answer','offer'].includes(q['type'])){
+      ws.sdp = q
 
-    if(q['type']=='offer'){
       rooms[ws.room].forEach(id =>{
         if(id!=ws.userID){
           sockMapping[id].send(message.toString())
         }
       })
-    }
-    
-    if(q['type']=='answer'){
-      ws.sdp = q
-      sockMapping[rooms[ws.room][0]].send(JSON.stringify(q))
       console.log("Sending answer")
 
     }

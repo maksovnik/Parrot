@@ -5,7 +5,15 @@ var room = ""
 var connection;
 var socket;
 
+
+var remoteStream;
+var remoteVideo;
+
+var cameraOn = false;
+
+
 const videoGrid = document.getElementById("video-grid");
+
 
 var audioOptions = 
 	{
@@ -21,6 +29,27 @@ var audioOptions =
 		}
 	}
 
+    function createStream() {
+        
+        remoteVideo = document.createElement('video')
+        const div = document.createElement('div')
+
+        div.classList.add("videoContainer")
+    
+        
+    
+        console.log("Stream created")
+        remoteVideo.controls = true;
+    
+        videoGrid.append(remoteVideo)
+        div.append(remoteVideo)
+        videoGrid.append(div)
+
+        remoteVideo.play();
+    
+    
+    }
+
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
 	document.getElementById("setup").style.display = 'none';
@@ -35,7 +64,7 @@ function connect(){
     socket.addEventListener('open', function(event) {
         console.log('WebSocket connection opened');
         console.log(room)
-
+        
         begin();
         
         socket.addEventListener('message', async function(event) {
@@ -54,6 +83,7 @@ function connect(){
 
             if(q.type=="joined"){
                 switchDisplay()
+                createStream()
             }
             if(q.type=="roomFull"){
                 connection.setLocalDescription()
@@ -79,6 +109,38 @@ async function begin(){
     connection = new RTCPeerConnection(iceConfig);
     var camera = await navigator.mediaDevices.getUserMedia(audioOptions)
     
+    document.getElementById('camera').onclick = async e => {
+
+        if(cameraOn){
+            cameraOn = false
+            document.getElementById('cameraI').src = "icons/cameraOff.png"
+            connection.removeTrack(remoteCam)
+            camera.removeTrack(camera.getVideoTracks()[0])
+        }
+        else{
+            cameraOn = true
+            document.getElementById('cameraI').src = "icons/cameraOn.png"
+
+            console.log("yes")
+            var newCam = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 4096 },
+                    height: { ideal: 2160 } 
+                } ,
+                audio: audioOptions})
+            var vidTrack = newCam.getVideoTracks()[0]
+            camera.addTrack(vidTrack)
+            remoteCam = connection.addTrack(vidTrack, camera)
+
+            
+        }
+
+
+        connection.setLocalDescription(await connection.createOffer({
+            iceRestart: true
+        }))
+
+    }
     document.getElementById('mic').onclick = d => {
 		var enabled = camera.getAudioTracks()[0].enabled;
 		document.getElementById('micI').src = enabled ?
@@ -118,57 +180,22 @@ async function begin(){
 		}
     }
 
-
-    function createStream(stream, muted = false) {
-    
-        const video = document.createElement('video')
-        const posters = ["https://cdnb.artstation.com/p/assets/images/images/014/861/241/large/jose-miranda-srgb-aang-final-con-brillo-jmt.jpg",
-            "https://cdn5.f-cdn.com/ppic/1430815/logo/3508484/creative_colorful_eye-HD.jpg"
-        ]
-        video.poster = posters[Math.floor(Math.random() * posters.length)];
-    
-        const div = document.createElement('div')
-    
-        video.tdiv = div;
-        div.id = "bo"
-    
-        video.srcObject = stream;
-        video.muted = muted;
-    
-        console.log("Stream created")
-        video.controls = true;
-    
-    
-        videoGrid.append(video)
-        div.append(video)
-        videoGrid.append(div)
-        video.play();
-    
-        stream.resetControls = k => {
-            video.controls = true;
-        }
-    
-        stream.onremovetrack = k => {
-            if (stream.getTracks().length == 0) {
-                console.log("Video deleted")
-                deleteVideo(video)
-            } else {
-                console.log("Video updated")
-                updateVideo(video, stream)
-            }
-        }
-    }
-
-
     connection.ontrack = event => {
+
+
         var track = event.track
-        var stream = event.streams[0]
+        remoteStream = event.streams[0]
 
         console.log("Track recieved")
 
-        createStream(stream)
-        stream.resetControls();
-        stream.addTrack(track);
+        
+        remoteStream.addTrack(track);
+        
+
+        remoteVideo.srcObject = remoteStream;
+
+        remoteVideo.play();
+        
 
 	}
 

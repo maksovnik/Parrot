@@ -146,13 +146,15 @@ img {
 	filter: invert(100%);
 }
 
+video::-webkit-media-controls-enclosure{border-radius: 0;}
+
+
 #mic,
 #camera,
 #addScreen,
 #clrScreens{
 	background-color: transparent;
 	text-align: center;
-	border-radius: 50%;
 	padding: 15;
 	border: none;
 	background-color: #2f3136
@@ -166,20 +168,23 @@ img {
 	
 }
 
-#bo {
+.videoContainer{
 	display: flex;
 	flex-grow: 1;
 	margin: 20px;
 	max-width: 750px;
 	min-width: 750px;
+
 }
-#bo:first-child {
+.videoContainer:first-child {
 	margin-left: auto;
 }
 
-#bo:last-child {
+.videoContainer:last-child {
 	margin-right: auto;
 }
+
+
 video {
 	width: 100%;
 }
