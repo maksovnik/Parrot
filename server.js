@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const WebSocket = require('ws');
+var fs = require('fs');
 
 const app = express();
 
@@ -26,17 +27,46 @@ var server = app.listen(process.env.PORT || 5000, () => {
 
 const wss = new WebSocket.Server({server:server})
 
+var roomDetails = {}
+var userID = 0
+var userMapping = {}
+
 wss.on('connection', function connection(ws) {
   console.log('Client connected');
-  // Handle WebSocket events here
+  userMapping[ws] = userID
+  ws.userID = userID
+  userID++;
+
+  ws.on('message', function incoming(message) {
+
+    q = JSON.parse(message.toString())
+
+    console.log(q)
+    if(q['type']=='joinRoom'){
+      var room = q['room']
+      console.log("User attempted to join "+room)
+
+      if(room in roomDetails){
+        roomDetails[room].push(ws.userID)
+      }
+      else{
+        roomDetails[room] = [ws.userID]
+      }
+      
+      ws.send(JSON.stringify({status:"good"}))
+    }
+    
+
+    console.log(roomDetails)
+
+  });
+
+  ws.on('close', function close() {
+    console.log('Client disconnected');
+
+  });
+  
 });
 
-wss.on('message', function incoming(message) {
-  console.log('Received message:', message);
-  // Handle incoming message here
-});
 
-wss.on('close', function close() {
-  console.log('Client disconnected');
-  // Handle disconnection here
-});
+
