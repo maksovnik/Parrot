@@ -4,13 +4,12 @@ var standard = "wss"
 var connection;
 var socket;
 
-
-var remoteStream;
-var remoteVideo;
-
 var cameraOn = false;
 
 const videoGrid = document.getElementById("video-grid");
+
+
+var currentStreams = {}
 
 
 var audioOptions = 
@@ -60,9 +59,9 @@ function connect(){
 
             if(q.type=="joined"){
                 switchDisplay()
-                remoteVideo = document.createElement('video')
-                remoteVideo.controls = true;
-                videoGrid.append(remoteVideo)
+                // remoteVideo = document.createElement('video')
+                // remoteVideo.controls = true;
+                // videoGrid.append(remoteVideo)
             }
             if(q.type=="roomFull"){
                 connection.setLocalDescription()
@@ -78,16 +77,43 @@ function connect(){
         connect()
     });
 
-    
-    
-
 }
 
 
+function ontrack(track,stream){
+    if(!(stream.id in currentStreams)){
+        currentStreams[stream.id] = {stream:stream}
+
+        var container = document.createElement('div')
+        var controls = document.createElement('div')
+        var slider = document.createElement('input')
+        slider.type="range"
+        slider.value=200
+
+        controls.innerHTML = "<button type='button'>C</button><button type='button'>M</button>"
+        var video = document.createElement('video')
+        video.autoplay=true
+        video.srcObject = stream
+
+        controls.classList.add("controls")
+
+        slider.addEventListener("change", function(e) {
+            video.volume = e.currentTarget.value / 100;
+            console.log(e.currentTarget.value / 100)
+        })
+
+        controls.append(slider)
+        container.append(video)
+        container.append(controls)
+        videoGrid.append(container)
+
+    }
+    console.log("Track recieved")
+}
 async function begin(){
     connection = new RTCPeerConnection(iceConfig);
     var camera = await navigator.mediaDevices.getUserMedia(audioOptions)
-    
+    ontrack(camera.getAudioTracks()[0],camera)
     document.getElementById('camera').onclick = async e => {
 
         if(cameraOn){
@@ -108,6 +134,8 @@ async function begin(){
                 audio: audioOptions})
             var vidTrack = newCam.getVideoTracks()[0]
             camera.addTrack(vidTrack)
+
+            
             remoteCam = connection.addTrack(vidTrack, camera)
         }
 
@@ -146,23 +174,10 @@ async function begin(){
     }
 
     connection.ontrack = event => {
-
-        
         var track = event.track
-        remoteStream = event.streams[0]
-
-        console.log("Track recieved")
-        console.log(event)
-
+        var stream = event.streams[0]
         
-        remoteStream.addTrack(track);
-        
-
-        remoteVideo.srcObject = remoteStream;
-
-        remoteVideo.play();
-        
-
+        ontrack(track,stream)
 	}
 
     console.log("setup complete")

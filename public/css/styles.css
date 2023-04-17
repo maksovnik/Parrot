@@ -152,7 +152,7 @@ video::-webkit-media-controls-enclosure{border-radius: 0;}
 #mic,
 #camera,
 #addScreen,
-#clrScreens{
+#clrScreens,.controls button{
 	background-color: transparent;
 	text-align: center;
 	padding: 15;
@@ -170,12 +170,17 @@ video::-webkit-media-controls-enclosure{border-radius: 0;}
 	
 }
 
+.controls{
+	display: flex;
+	justify-content: flex-end;
+}
 video{
 	display: flex;
 	flex-grow: 1;
-	margin: 20px;
 	max-width: 750px;
 	min-width: 750px;
+	border:1px solid black;
+	background-color:#202225
 
 }
 video:first-child {
@@ -186,7 +191,9 @@ video:last-child {
 	margin-right: auto;
 }
 
-
+.controls button{
+	background: rgb(59, 59, 59);
+}
 #sendbar {
 	display: flex;
 	width: 100%;
