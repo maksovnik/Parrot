@@ -29,26 +29,24 @@ var audioOptions =
 		}
 	}
 
-    function createStream() {
-        
-        remoteVideo = document.createElement('video')
-        const div = document.createElement('div')
+function createStream() {
+    
+    remoteVideo = document.createElement('video')
+    const div = document.createElement('div')
 
-        div.classList.add("videoContainer")
-    
-        
-    
-        console.log("Stream created")
-        remoteVideo.controls = true;
-    
-        videoGrid.append(remoteVideo)
-        div.append(remoteVideo)
-        videoGrid.append(div)
+    div.classList.add("videoContainer")
 
-        remoteVideo.play();
-    
-    
-    }
+    console.log("Stream created")
+    remoteVideo.controls = true;
+
+    videoGrid.append(remoteVideo)
+    div.append(remoteVideo)
+    videoGrid.append(div)
+
+    remoteVideo.play();
+
+
+}
 
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
