@@ -162,13 +162,15 @@ video::-webkit-media-controls-enclosure{border-radius: 0;}
 
 #video-grid {
 	display: flex;
+	align-items: center;
+	justify-content: center;
 	flex-grow: 1;
 	overflow-x: auto;
 	width: 100%;
 	
 }
 
-.videoContainer{
+video{
 	display: flex;
 	flex-grow: 1;
 	margin: 20px;
@@ -176,18 +178,14 @@ video::-webkit-media-controls-enclosure{border-radius: 0;}
 	min-width: 750px;
 
 }
-.videoContainer:first-child {
+video:first-child {
 	margin-left: auto;
 }
 
-.videoContainer:last-child {
+video:last-child {
 	margin-right: auto;
 }
 
-
-video {
-	width: 100%;
-}
 
 #sendbar {
 	display: flex;

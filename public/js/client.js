@@ -1,7 +1,6 @@
 const iceConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
 
 var standard = "wss"
-var room = ""
 var connection;
 var socket;
 
@@ -10,7 +9,6 @@ var remoteStream;
 var remoteVideo;
 
 var cameraOn = false;
-
 
 const videoGrid = document.getElementById("video-grid");
 
@@ -29,31 +27,12 @@ var audioOptions =
 		}
 	}
 
-function createStream() {
-    
-    remoteVideo = document.createElement('video')
-    const div = document.createElement('div')
-
-    div.classList.add("videoContainer")
-
-    console.log("Stream created")
-    remoteVideo.controls = true;
-
-    videoGrid.append(remoteVideo)
-    div.append(remoteVideo)
-    videoGrid.append(div)
-
-    remoteVideo.play();
-
-
-}
 
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
 	document.getElementById("setup").style.display = 'none';
     console.log("Display Switching")
 }
-
 
 function connect(){
     room = document.getElementById("room").value
@@ -81,7 +60,9 @@ function connect(){
 
             if(q.type=="joined"){
                 switchDisplay()
-                createStream()
+                remoteVideo = document.createElement('video')
+                remoteVideo.controls = true;
+                videoGrid.append(remoteVideo)
             }
             if(q.type=="roomFull"){
                 connection.setLocalDescription()
@@ -119,7 +100,6 @@ async function begin(){
             cameraOn = true
             document.getElementById('cameraI').src = "icons/cameraOn.png"
 
-            console.log("yes")
             var newCam = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 4096 },
@@ -129,8 +109,6 @@ async function begin(){
             var vidTrack = newCam.getVideoTracks()[0]
             camera.addTrack(vidTrack)
             remoteCam = connection.addTrack(vidTrack, camera)
-
-            
         }
 
 
@@ -149,17 +127,6 @@ async function begin(){
     
     connection.addTrack(camera.getTracks()[0], camera)
     
-    connection.onconnectionstatechange = async e => {
-       // console.log(e)
-    }
-
-    connection.onicecandidate = e => {
-       // console.log(e)
-    }
-
-    connection.oniceconnectionstatechange = e => {
-        //console.log(e)
-    }
 
     connection.onconnectionstatechange = async e => {
 		if (connection.connectionState === 'connected') {
@@ -180,11 +147,12 @@ async function begin(){
 
     connection.ontrack = event => {
 
-
+        
         var track = event.track
         remoteStream = event.streams[0]
 
         console.log("Track recieved")
+        console.log(event)
 
         
         remoteStream.addTrack(track);
@@ -198,11 +166,6 @@ async function begin(){
 	}
 
     console.log("setup complete")
-
-    
-
-    
-    
 
 }
 
