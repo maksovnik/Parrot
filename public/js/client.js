@@ -90,7 +90,13 @@ function ontrack(track,stream){
         slider.type="range"
         slider.value=200
 
-        controls.innerHTML = "<button type='button'>C</button><button type='button'>M</button>"
+        var button = document.createElement('button')
+        button.innerHTML = 'X'
+        button.type=button
+        button.onclick = e =>{
+            stream.getTracks().forEach(track => track.stop());
+            container.remove()
+        }
         var video = document.createElement('video')
         video.autoplay=true
         video.srcObject = stream
@@ -102,6 +108,7 @@ function ontrack(track,stream){
             console.log(e.currentTarget.value / 100)
         })
 
+        controls.append(button)
         controls.append(slider)
         container.append(video)
         container.append(controls)
@@ -145,6 +152,25 @@ async function begin(){
         }))
 
     }
+
+
+    document.getElementById('addScreen').onclick = async e => {
+        screen = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: audioOptions
+        })
+
+        ontrack(screen.getAudioTracks()[0],screen)
+        ontrack(screen.getVideoTracks()[0],screen)
+
+        connection.addTrack(screen.getAudioTracks()[0],screen)
+        connection.addTrack(screen.getVideoTracks()[0],screen)
+
+        connection.setLocalDescription(await connection.createOffer({
+            iceRestart: true
+        }))
+    }
+
     document.getElementById('mic').onclick = d => {
 		var enabled = camera.getAudioTracks()[0].enabled;
 		document.getElementById('micI').src = enabled ?
