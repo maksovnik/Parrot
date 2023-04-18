@@ -1,6 +1,5 @@
 const iceConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
 
-var standard = "wss"
 var connection;
 var socket;
 
@@ -13,27 +12,25 @@ var currentStreams = {}
 
 
 var audioOptions = 
-	{
-		audio: {
-			autoGainControl: false,
-			channelCount: 2,
-			echoCancellation: false,
-			latency: 0,
-			noiseSuppression: false,
-			sampleRate: 48000,
-			sampleSize: 16,
-			volume: 1.0
-		}
-	}
+    {audio: {
+        autoGainControl: false,
+        channelCount: 2,
+        echoCancellation: false,
+        latency: 0,
+        noiseSuppression: false,
+        sampleRate: 48000,
+        sampleSize: 16,
+        volume: 1.0
+	}}
 
 
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
-	document.getElementById("setup").style.display = 'none';
+	document.getElementById("setup").remove()
     console.log("Display Switching")
 }
 
-function connect(){
+function connect(standard = "wss"){
     room = document.getElementById("room").value
     socket = new WebSocket(standard + '://' + location.host);
 
@@ -59,9 +56,6 @@ function connect(){
 
             if(q.type=="joined"){
                 switchDisplay()
-                // remoteVideo = document.createElement('video')
-                // remoteVideo.controls = true;
-                // videoGrid.append(remoteVideo)
             }
             if(q.type=="roomFull"){
                 connection.setLocalDescription()
@@ -73,8 +67,7 @@ function connect(){
       });
 
     socket.addEventListener("error", (event) => {
-        standard = "ws"
-        connect()
+        connect("ws")
     });
 
 }
@@ -85,21 +78,39 @@ function ontrack(track,stream){
         currentStreams[stream.id] = {stream:stream}
 
         var container = document.createElement('div')
+        container.classList.add("container")
+
         var controls = document.createElement('div')
         var slider = document.createElement('input')
         slider.type="range"
         slider.value=200
 
         var button = document.createElement('button')
+
         button.innerHTML = 'X'
+
         button.type=button
         button.onclick = e =>{
             stream.getTracks().forEach(track => track.stop());
             container.remove()
         }
+        
+
+        var button2 = document.createElement('button')
+
+
         var video = document.createElement('video')
         video.autoplay=true
         video.srcObject = stream
+
+        button2.innerHTML = 'O'
+
+        button2.type=button2
+        button2.onclick = e =>{
+            video.requestFullscreen();
+        }
+
+
 
         controls.classList.add("controls")
 
@@ -110,6 +121,7 @@ function ontrack(track,stream){
 
         controls.append(button)
         controls.append(slider)
+        controls.append(button2)
         container.append(video)
         container.append(controls)
         videoGrid.append(container)
@@ -203,6 +215,10 @@ async function begin(){
         var track = event.track
         var stream = event.streams[0]
         
+        stream.onremovetrack = track =>{
+            console.log("Track removed")
+            
+        }
         ontrack(track,stream)
 	}
 

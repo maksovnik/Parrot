@@ -28,27 +28,15 @@ wss.on('connection', function connection(ws) {
   ws.userID = userID
   userID++;
 
-  ws.on('message', function incoming(message) {
+  ws.on('message', function incoming(data) {
 
-    q = JSON.parse(message.toString())
-    console.log("Message received of time "+ q.type)
+    message = JSON.parse(data.toString())
+    console.log("Message received of time "+ message.type)
     
-    if(['answer','offer'].includes(q['type'])){
-      ws.sdp = q
-
-      rooms[ws.room].forEach(id =>{
-        if(id!=ws.userID){
-          sockMapping[id].send(message.toString())
-        }
-      })
-      console.log("Sending answer")
-
-    }
-
-    if(q['type']=='joinRoom'){
-      ws.room = q['room']
-      ws.sdp = q['sdp']
-      console.log(q)
+    if(message['type']=='joinRoom'){
+      ws.room = message['room']
+      ws.sdp = message['sdp']
+      console.log(message)
       if(ws.room in rooms){
         rooms[ws.room].push(ws.userID)
 
@@ -63,6 +51,19 @@ wss.on('connection', function connection(ws) {
       console.log("User " + userID + " joined "+ws.room)
       ws.send(JSON.stringify({type:"joined"}))
     }
+
+    if(['answer','offer'].includes(message['type'])){
+      ws.sdp = message
+
+      rooms[ws.room].forEach(id =>{
+        if(id!=ws.userID){
+          sockMapping[id].send(data.toString())
+        }
+      })
+      console.log("Sending answer")
+
+    }
+
 
 
   });
