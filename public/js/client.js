@@ -72,6 +72,28 @@ function connect(standard = "wss"){
 
 }
 
+async function getRtp() {
+	connection.getStats(null).then(stats => {
+		var statsOutput = "";
+
+		stats.forEach(report => {
+			if (report.type === 'candidate-pair') {
+				if (report.nominated) {
+					var s = report.currentRoundTripTime
+					if (s != undefined) {
+						console.log("CRTT:" + s * 1000 + "ms")
+					}
+
+				}
+			}
+			if (report.type === 'remote-inbound-rtp') {
+				console.log("Inbound:" + report.roundTripTime * 1000 + 'ms')
+			}
+		});
+
+	});
+}
+
 
 function ontrack(track,stream){
     if(!(stream.id in currentStreams)){
