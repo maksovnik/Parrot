@@ -2,13 +2,10 @@ const iceConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
 
 var connection;
 var socket;
-
 var cameraOn = false;
 
-const videoGrid = document.getElementById("video-grid");
-
-
 var currentStreams = {}
+var dataChannel = {readyState:"closed"}
 
 
 var audioOptions = 
@@ -24,10 +21,47 @@ var audioOptions =
 	}}
 
 
+
+function sendPackage(pkg){
+    if(dataChannel.readyState === "open"){
+        console.log("Sending via DC")
+        dataChannel.send(JSON.stringify(pkg))
+    }
+    else{
+        console.log("Sending via WS")
+        socket.send(JSON.stringify(pkg))
+    }
+}
 function switchDisplay() {
 	document.getElementById("call").style.display = '';
 	document.getElementById("setup").remove()
     console.log("Display Switching")
+}
+
+function handleMessage(string){
+
+    pkg = JSON.parse(string)
+    if(pkg.type=="offer"){
+        connection.setRemoteDescription(pkg)
+        connection.setLocalDescription()
+    }
+
+    if(pkg.type=="answer"){
+        connection.setRemoteDescription(pkg)
+    }
+
+    if(pkg.type=="joined"){
+        switchDisplay()
+    }
+    if(pkg.type=="roomFull"){
+        connection.setLocalDescription() 
+    }
+    if(pkg.type=="message"){
+        console.log("received")
+        var chatbox = document.getElementById("chatbox")
+        chatbox.innerHTML += '<br>Them:'+pkg.message;
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
 }
 
 function connect(standard = "wss"){
@@ -40,30 +74,11 @@ function connect(standard = "wss"){
         
         begin();
         
-        socket.addEventListener('message', async function(event) {
-            
-            q = JSON.parse(event.data.toString())
-            console.log(q)
-
-            if(q.type=="offer"){
-                connection.setRemoteDescription(q)
-                connection.setLocalDescription(await connection.createAnswer())
-            }
-
-            if(q.type=="answer"){
-                connection.setRemoteDescription(q)
-            }
-
-            if(q.type=="joined"){
-                switchDisplay()
-            }
-            if(q.type=="roomFull"){
-                connection.setLocalDescription()
-                
-            }
+        socket.addEventListener('message', function(event) {
+            handleMessage(event.data.toString())
         });
 
-        socket.send(JSON.stringify({type:"joinRoom",room:room}))
+        sendPackage({type:"joinRoom",room:room})
       });
 
     socket.addEventListener("error", (event) => {
@@ -72,36 +87,12 @@ function connect(standard = "wss"){
 
 }
 
-async function getRtp() {
-	connection.getStats(null).then(stats => {
-		var statsOutput = "";
-
-		stats.forEach(report => {
-			if (report.type === 'candidate-pair') {
-				if (report.nominated) {
-					var s = report.currentRoundTripTime
-					if (s != undefined) {
-						console.log("CRTT:" + s * 1000 + "ms")
-					}
-
-				}
-			}
-			if (report.type === 'remote-inbound-rtp') {
-				console.log("Inbound:" + report.roundTripTime * 1000 + 'ms')
-			}
-		});
-
-	});
-}
-
-
-function ontrack(track,stream,localMute=false){
+function ontrack(track,stream,localMute=false,created=false){
     if(!(stream.id in currentStreams)){
         currentStreams[stream.id] = {stream:stream}
 
         var container = document.createElement('div')
         container.classList.add("container")
-
         var controls = document.createElement('div')
         var slider = document.createElement('input')
         slider.type="range"
@@ -109,41 +100,46 @@ function ontrack(track,stream,localMute=false){
 
         slider.classList.add("volume-slider")
 
-        var button = document.createElement('img')
+        var closeButton = document.createElement('img')
 
-        button.src = '/icons/close.png'
+        closeButton.src = '/icons/close.png'
 
-        button.type=button
-        button.onclick = e =>{
-            stream.getTracks().forEach(track => track.stop());
-            container.remove()
-        }
-        
 
-        var button2 = document.createElement('img')
+    
+        var fsButton = document.createElement('img')
 
 
         var video = document.createElement('video')
+
+        closeButton.onclick = async e =>{
+            stream.getTracks().forEach(track => {
+                    connection.removeTrack(track.sender)
+                    track.stop()
+                }
+                );
+            container.remove()
+            if(connection.connectionState === 'connected'){
+                connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+            }
+        }
+
+
         video.autoplay=true
         video.srcObject = stream
         video.poster = "/icons/test.jpg"
         stream.video = video
+        stream.container = container
 
 
-        button2.src = '/icons/fullscreen.png'
+        fsButton.src = '/icons/fullscreen.png'
 
-        button2.type=button2
-        button2.onclick = e =>{
+        fsButton.onclick = e =>{
             video.requestFullscreen();
         }
 
         video.ondblclick = e=>{
             video.requestFullscreen();
         }
-
-
-
-
 
         controls.classList.add("controls")
 
@@ -156,12 +152,16 @@ function ontrack(track,stream,localMute=false){
             slider.value=0
             video.volume=0
         }
-        controls.append(button)
+
+        if(created){
+            controls.append(closeButton)
+        }
+        
         controls.append(slider)
-        controls.append(button2)
+        controls.append(fsButton)
         container.append(video)
         container.append(controls)
-        videoGrid.append(container)
+        document.getElementById("video-grid").append(container)
 
     }
     console.log("Track recieved")
@@ -178,7 +178,7 @@ function getRtp() {
 					var s = report.currentRoundTripTime
 					if (s != undefined) {
                         var latency = s*1000
-						console.log("CRTT:" + s * 1000 + "ms")
+						//console.log("CRTT:" + s * 1000 + "ms")
                         document.getElementById("crtt").innerHTML = "CRTT: "+latency+"ms"
 					}
 
@@ -186,7 +186,7 @@ function getRtp() {
 			}
 			if (report.type === 'remote-inbound-rtp') {
 				var latency = report.roundTripTime * 1000
-				console.log("Inbound:" + latency + 'ms')
+				//console.log("Inbound:" + latency + 'ms')
                 document.getElementById("inbound").innerHTML = "Inbound: "+latency+"ms"
                
 			}
@@ -196,8 +196,6 @@ function getRtp() {
 }
 
 
-
-var dataChannel
 async function begin(){
     connection = new RTCPeerConnection(iceConfig);
     var camera = await navigator.mediaDevices.getUserMedia(audioOptions)
@@ -221,11 +219,13 @@ async function begin(){
     connection.ondatachannel = d=>{
         dataChannel = d.channel
     
-
+        console.log("Working")
         var input = document.getElementById("messageInput")
         input.addEventListener("keyup", e =>{
             if (e.code === 'Enter') {
-                dataChannel.send(input.value)
+                pkg = {type:"message",message:input.value}
+                sendPackage(pkg)
+
                 var chatbox = document.getElementById("chatbox")
                 chatbox.innerHTML += '<br>Me:'+input.value;
                 chatbox.scrollTop = chatbox.scrollHeight;
@@ -241,9 +241,7 @@ async function begin(){
     }
 
     dataChannel.onmessage = d =>{
-        var chatbox = document.getElementById("chatbox")
-        chatbox.innerHTML += '<br>Them:'+d.data;
-        chatbox.scrollTop = chatbox.scrollHeight;
+        handleMessage(d.data)
     }
 
 
@@ -278,10 +276,11 @@ async function begin(){
             remoteCam = connection.addTrack(vidTrack, camera)
         }
 
+        console.log(connection.connectionState )
+        if(connection.connectionState === 'connected'){
+            connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+        }
 
-        connection.setLocalDescription(await connection.createOffer({
-            iceRestart: true
-        }))
 
     }
 
@@ -291,16 +290,23 @@ async function begin(){
             video: true,
             audio: audioOptions
         })
+        
+        var video = screen.getVideoTracks()[0]
+        var audio = screen.getAudioTracks()[0]
 
-        ontrack(screen.getAudioTracks()[0],screen,true)
-        ontrack(screen.getVideoTracks()[0],screen,true)
+        video.sender = connection.addTrack(screen.getAudioTracks()[0],screen)
+        audio.sender = connection.addTrack(screen.getVideoTracks()[0],screen)
 
-        connection.addTrack(screen.getAudioTracks()[0],screen)
-        connection.addTrack(screen.getVideoTracks()[0],screen)
 
-        connection.setLocalDescription(await connection.createOffer({
-            iceRestart: true
-        }))
+        ontrack(audio,screen,true,true)
+        ontrack(video,screen,true,true)
+
+        
+
+
+        if(connection.connectionState === 'connected'){
+            connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+        }
     }
 
     document.getElementById('mic').onclick = d => {
@@ -326,7 +332,7 @@ async function begin(){
 			console.log("Ice Gathering complete, sending SDP")
 			var sdp = connection.localDescription.toJSON()
 
-            socket.send(JSON.stringify(sdp))
+            sendPackage(sdp)
             
 		}
     }
@@ -338,6 +344,11 @@ async function begin(){
         stream.onremovetrack = track =>{
             console.log("Track removed")
             stream.video.load()
+            if(stream.getTracks().length==0){
+                console.log("test")
+                stream.container.remove()
+            }
+            
         }
         ontrack(track,stream)
 	}
