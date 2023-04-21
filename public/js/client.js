@@ -7,6 +7,9 @@ var cameraOn = false;
 var currentStreams = {}
 var dataChannel = {readyState:"closed"}
 
+var modes = ["user","environment","left","right"]
+var fm = 0
+var remoteCam;
 
 var audioOptions = 
     {audio: {
@@ -134,11 +137,11 @@ function ontrack(track,stream,localMute=false,created=false){
         fsButton.src = '/icons/fullscreen.png'
 
         fsButton.onclick = e =>{
-            video.requestFullscreen();
+            video.webkitRequestFullscreen()
         }
 
         video.ondblclick = e=>{
-            video.requestFullscreen();
+            video.webkitRequestFullscreen()
         }
 
         controls.classList.add("controls")
@@ -250,13 +253,60 @@ async function begin(){
     console.log("yes")
 
     ontrack(camera.getAudioTracks()[0],camera,true)
+
+    document.getElementById('cameraSwitch').onclick = async e => {
+        if(fm==modes.length-1){
+            fm=0
+        }
+        else{
+            fm++;
+        }
+        console.log("hello" + fm)
+
+
+        // 
+        var track = camera.getVideoTracks()[0]
+        camera.removeTrack(track)
+
+        
+        track.stop()
+        
+
+        var newCam = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 4096 },
+                height: { ideal: 2160 },
+                facingMode:  modes[fm]
+            } ,
+            audio: false})
+
+        var vidTrack = newCam.getVideoTracks()[0]
+
+        camera.addTrack(vidTrack)
+        connection.removeTrack(remoteCam)
+        remoteCam = connection.addTrack(vidTrack, camera)
+
+
+
+
+
+        camera.video.load()
+
+        if(connection.connectionState === 'connected'){
+            connection.setLocalDescription(await connection.createOffer({iceRestart: true}))
+        }
+
+    }
+
     document.getElementById('camera').onclick = async e => {
 
         if(cameraOn){
             cameraOn = false
             document.getElementById('cameraI').src = "icons/cameraOff.png"
             connection.removeTrack(remoteCam)
-            camera.removeTrack(camera.getVideoTracks()[0])
+            var track = camera.getVideoTracks()[0]
+            camera.removeTrack(track)
+            track.stop()
             camera.video.load()
         }
         else{
@@ -266,13 +316,12 @@ async function begin(){
             var newCam = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 4096 },
-                    height: { ideal: 2160 } 
+                    height: { ideal: 2160 },
+                    facingMode:  modes[fm]
                 } ,
                 audio: audioOptions})
             var vidTrack = newCam.getVideoTracks()[0]
             camera.addTrack(vidTrack)
-
-            
             remoteCam = connection.addTrack(vidTrack, camera)
         }
 

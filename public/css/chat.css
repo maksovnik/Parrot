@@ -80,6 +80,11 @@
   #cameraI {
 	filter: invert(1);
   }
+
+    
+  #cameraSI {
+	filter: invert(1);
+  }
   
 
   #connection{
