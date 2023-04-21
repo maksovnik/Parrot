@@ -227,8 +227,7 @@ async function begin(){
         console.log("Data channel open")
 
 
-        document.getElementById("connection").style.color = "green";
-        document.getElementById("connection").innerHTML="Connected"
+
         var intID = setInterval(function() {
             getRtp()
           }, 500);
@@ -398,8 +397,15 @@ async function begin(){
     
 
     connection.onconnectionstatechange = async e => {
+        console.log(connection.connectionState)
 		if (connection.connectionState === 'connected') {
-			console.log("Connected")
+            document.getElementById("connection").style.color = "green";
+            document.getElementById("connection").innerHTML="Connected"
+		}
+        if (connection.connectionState === 'disconnected') {
+            
+            document.getElementById("connection").style.color = "red";
+            document.getElementById("connection").innerHTML="Disconnected"
 		}
 	}
 
