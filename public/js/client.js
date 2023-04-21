@@ -294,12 +294,20 @@ async function begin(){
         var video = screen.getVideoTracks()[0]
         var audio = screen.getAudioTracks()[0]
 
-        video.sender = connection.addTrack(screen.getAudioTracks()[0],screen)
-        audio.sender = connection.addTrack(screen.getVideoTracks()[0],screen)
+                
+        if(audio){
+            audio.sender = connection.addTrack(screen.getAudioTracks()[0],screen)
+            ontrack(audio,screen,true,true)
+        }
 
 
-        ontrack(audio,screen,true,true)
+        video.sender = connection.addTrack(screen.getVideoTracks()[0],screen)
         ontrack(video,screen,true,true)
+
+
+
+        
+        
 
         
 
