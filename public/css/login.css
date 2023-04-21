@@ -1,0 +1,57 @@
+/* Style the container */
+#setup {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin: auto;
+}
+/* Style the header */
+#header {
+	display: flex;
+	align-items: center;
+}
+#header h1 {
+	font-size: 36px;
+	font-weight: bold;
+	color: #fff;
+	margin-right: 20px;
+}
+#header img {
+	width: 150px;
+	height: 150px;
+}
+/* Style the input field */
+#room {
+	width: 100%;
+	max-width: 250px;
+	height: 40px;
+	padding: 10px;
+	font-size: 16px;
+	border-radius: 5px;
+	border: 1px solid #fff;
+	margin-bottom: 20px;
+	background-color: #2d2d2d;
+	color: #fff;
+}
+#room:focus {
+	outline: none;
+	border: 1px solid #3498db;
+}
+/* Style the button */
+#generate {
+	width: 100%;
+	max-width: 200px;
+	height: 50px;
+	background-color: #3498db;
+	color: #fff;
+	font-size: 18px;
+	font-weight: bold;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+#generate:hover {
+	background-color: #2980b9;
+}
+

@@ -95,7 +95,7 @@ async function getRtp() {
 }
 
 
-function ontrack(track,stream){
+function ontrack(track,stream,localMute=false){
     if(!(stream.id in currentStreams)){
         currentStreams[stream.id] = {stream:stream}
 
@@ -105,11 +105,13 @@ function ontrack(track,stream){
         var controls = document.createElement('div')
         var slider = document.createElement('input')
         slider.type="range"
-        slider.value=200
+        slider.value=100
 
-        var button = document.createElement('button')
+        slider.classList.add("volume-slider")
 
-        button.innerHTML = 'X'
+        var button = document.createElement('img')
+
+        button.src = '/icons/close.png'
 
         button.type=button
         button.onclick = e =>{
@@ -118,19 +120,28 @@ function ontrack(track,stream){
         }
         
 
-        var button2 = document.createElement('button')
+        var button2 = document.createElement('img')
 
 
         var video = document.createElement('video')
         video.autoplay=true
         video.srcObject = stream
+        video.poster = "/icons/test.jpg"
+        stream.video = video
 
-        button2.innerHTML = 'O'
+
+        button2.src = '/icons/fullscreen.png'
 
         button2.type=button2
         button2.onclick = e =>{
             video.requestFullscreen();
         }
+
+        video.ondblclick = e=>{
+            video.requestFullscreen();
+        }
+
+
 
 
 
@@ -141,6 +152,10 @@ function ontrack(track,stream){
             console.log(e.currentTarget.value / 100)
         })
 
+        if(localMute){
+            slider.value=0
+            video.volume=0
+        }
         controls.append(button)
         controls.append(slider)
         controls.append(button2)
@@ -151,10 +166,92 @@ function ontrack(track,stream){
     }
     console.log("Track recieved")
 }
+
+
+function getRtp() {
+	connection.getStats(null).then(stats => {
+		var statsOutput = "";
+
+		stats.forEach(async report => {
+			if (report.type === 'candidate-pair') {
+				if (report.nominated) {
+					var s = report.currentRoundTripTime
+					if (s != undefined) {
+                        var latency = s*1000
+						console.log("CRTT:" + s * 1000 + "ms")
+                        document.getElementById("crtt").innerHTML = "CRTT: "+latency+"ms"
+					}
+
+				}
+			}
+			if (report.type === 'remote-inbound-rtp') {
+				var latency = report.roundTripTime * 1000
+				console.log("Inbound:" + latency + 'ms')
+                document.getElementById("inbound").innerHTML = "Inbound: "+latency+"ms"
+               
+			}
+		});
+
+	});
+}
+
+
+
+var dataChannel
 async function begin(){
     connection = new RTCPeerConnection(iceConfig);
     var camera = await navigator.mediaDevices.getUserMedia(audioOptions)
-    ontrack(camera.getAudioTracks()[0],camera)
+
+    dataChannel = connection.createDataChannel({negotiated: true, id: 0})
+
+    dataChannel.onopen = e=>{
+        console.log("Data channel open")
+
+
+        document.getElementById("connection").style.color = "green";
+        document.getElementById("connection").innerHTML="Connected"
+        var intID = setInterval(function() {
+            getRtp()
+          }, 500);
+          
+
+
+    }
+
+    connection.ondatachannel = d=>{
+        dataChannel = d.channel
+    
+
+        var input = document.getElementById("messageInput")
+        input.addEventListener("keyup", e =>{
+            if (e.code === 'Enter') {
+                dataChannel.send(input.value)
+                var chatbox = document.getElementById("chatbox")
+                chatbox.innerHTML += '<br>Me:'+input.value;
+                chatbox.scrollTop = chatbox.scrollHeight;
+
+
+                input.value = ""
+                
+
+
+            }
+        });
+
+    }
+
+    dataChannel.onmessage = d =>{
+        var chatbox = document.getElementById("chatbox")
+        chatbox.innerHTML += '<br>Them:'+d.data;
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+
+
+
+    console.log("yes")
+
+    ontrack(camera.getAudioTracks()[0],camera,true)
     document.getElementById('camera').onclick = async e => {
 
         if(cameraOn){
@@ -162,6 +259,7 @@ async function begin(){
             document.getElementById('cameraI').src = "icons/cameraOff.png"
             connection.removeTrack(remoteCam)
             camera.removeTrack(camera.getVideoTracks()[0])
+            camera.video.load()
         }
         else{
             cameraOn = true
@@ -194,8 +292,8 @@ async function begin(){
             audio: audioOptions
         })
 
-        ontrack(screen.getAudioTracks()[0],screen)
-        ontrack(screen.getVideoTracks()[0],screen)
+        ontrack(screen.getAudioTracks()[0],screen,true)
+        ontrack(screen.getVideoTracks()[0],screen,true)
 
         connection.addTrack(screen.getAudioTracks()[0],screen)
         connection.addTrack(screen.getVideoTracks()[0],screen)
@@ -239,7 +337,7 @@ async function begin(){
         
         stream.onremovetrack = track =>{
             console.log("Track removed")
-            
+            stream.video.load()
         }
         ontrack(track,stream)
 	}

@@ -1,202 +1,21 @@
-body, html {
+html {
 	margin: 0;
-	background-color: #141414 
+	padding: 0;
+	background-color: #141414;
+	height: 100%;
 }
-@font-face {
-	font-family: 'Product Sans';
-	font-style: normal;
-	src: local('Open Sans'), local('OpenSans'), url(https://fonts.gstatic.com/s/productsans/v5/HYvgU2fE2nRJvZ5JFAumwegdm0LZdjqr5-oayXSOefg.woff2) format('woff2');
-}
-* {
-	font-size: 100%;
-	font-family: Product Sans;
-}
+
 body {
 	display: flex;
-	justify-content: center;
-	align-items: center;
-	text-align: center;
-	height: 100vh;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	
 }
 
-/* Style the container */
-#setup {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	height: 100vh;
-}
-/* Style the header */
-#header {
-	display: flex;
-	align-items: center;
-}
-#header h1 {
-	font-size: 36px;
-	font-weight: bold;
-	color: #fff;
-	margin-right: 20px;
-}
-#header img {
-	width: 150px;
-	height: 150px;
-}
-/* Style the input field */
-#room {
-	width: 100%;
-	max-width: 250px;
-	height: 40px;
-	padding: 10px;
-	font-size: 16px;
-	border-radius: 5px;
-	border: 1px solid #fff;
-	margin-bottom: 20px;
-	background-color: #2d2d2d;
-	color: #fff;
-}
-#room:focus {
-	outline: none;
-	border: 1px solid #3498db;
-}
-/* Style the button */
-#generate {
-	width: 100%;
-	max-width: 200px;
-	height: 50px;
-	background-color: #3498db;
-	color: #fff;
-	font-size: 18px;
-	font-weight: bold;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	transition: background-color 0.3s ease;
-}
-#generate:hover {
-	background-color: #2980b9;
-}
-
-#chatbox {
-	overflow-y: auto;
-	width: 100%;
-	color: white;
-}
-*::-webkit-scrollbar {
-	width: 12px;
-	background-color: #2e3338 
-}
-*::-webkit-scrollbar-thumb {
-	border-radius: 10px;
-	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
-	background-color: #202225;
-}
-#micI, #cameraI, #screenI, #clrscreenI{
-	background-color: transparent;
-	height: 40px;
-	width: 40px;
-	display: block;
-	margin: auto;
-	-webkit-filter: invert(100%);
-   /* Safari/Chrome */
-	filter: invert(100%);
-}
-video::-webkit-media-controls-enclosure{
-   border-radius: 0;
-}
-#mic, #camera, #addScreen, #clrScreens,.controls button{
-	background-color: transparent;
-	text-align: center;
-	padding: 15;
-	border: none;
-	background-color: #2f3136 
-}
-
-
-
-#call{
-	height:100%;
-	width:100%;
-}
-
-
-#sendbar {
-	display: flex;
-	width: 100%;
-}
-#messageInput {
-	outline-style: none;
-	box-shadow: none;
-	background-color: #40444b;
-	color: white;
-	width: 100%;
-}
-
-#video-grid {
-	display: flex;
-	flex-wrap: nowrap;
-	overflow-x: auto;
-	justify-content: space-between;
-  }
-  
-  .container {
-	width: 48%;
-	margin-right: 10px;
-	min-width: 750px;
-  }
-  
-  video {
-	display: block;
-	width: 100%;
-	height: auto;
-
-  }
-  
-  .controls {
-	width: 100%;
-	background-color: rgba(0, 0, 0, 0.8);
-	padding: 5px;
-	box-sizing: border-box;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-  }
-  
-
-  .controls button {
-	color: white;
-	background-color: transparent;
-	border: none;
-	font-size: 16px;
-	cursor: pointer;
-  }
-  
-  .controls input[type="range"] {
-	-webkit-appearance: none;
-	height: 5px;
-	background-color: white;
-	outline: none;
-	margin: 0 10px;
-	flex-grow: 1;
-  }
-  
-  .controls input[type="range"]::-webkit-slider-thumb {
-	-webkit-appearance: none;
-	width: 15px;
-	height: 15px;
-	background-color: white;
-	border-radius: 50%;
-	cursor: pointer;
-  }
-  
-  .controls input[type="range"]::-moz-range-thumb {
-	width: 15px;
-	height: 15px;
-	background-color: white;
-	border-radius: 50%;
-	cursor: pointer;
-  }
-  
-  video::-webkit-media-controls {
+video::-webkit-media-controls {
 	display:none !important;
   }
+
+
+  

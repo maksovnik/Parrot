@@ -1,0 +1,260 @@
+* {
+	box-sizing: border-box;
+  }
+  
+  html {
+	height: 100%;
+  }
+  
+  body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	background-color: #121212;
+	color: #e0e0e0;
+	font-family: "Helvetica Neue", sans-serif;
+  }
+  
+  .icons {
+	height: 40px;
+	width: 40px;
+  }
+  
+  #call {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	padding: 10px;
+  }
+  
+  #mediaTab {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex-grow: 1;
+  }
+  
+  .controls {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	margin-top: 10px;
+	margin-left: auto;
+  }
+  
+  .controls img {
+	background-color: transparent;
+	border: none;
+	margin: 0 20px;
+	cursor: pointer;
+	height: 30px;
+	width: 30px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: all 0.3s ease;
+  }
+  
+  .controls img:focus {
+	outline: none;
+  }
+  
+  .controls img:hover {
+	transform: scale(1.1);
+  }
+  
+  .controls img:hover img {
+	filter: brightness(200%);
+  }
+  
+  .controls img:active {
+	transform: scale(0.9);
+  }
+  
+  .controls img:active img {
+	filter: brightness(100%);
+  }
+  
+  #cameraI {
+	filter: invert(1);
+  }
+  
+
+  #connection{
+	color: red;
+  }
+
+  #status{
+	width:100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin:5px;
+  }
+
+
+  #chatbox {
+	width: 100%;
+	padding: 10px;
+	background-color: #1e1e1e;
+	overflow-y: auto;
+	max-height: 30%;
+  }
+  
+  #sendbar {
+	background-color: #1e1e1e;
+	width: 100%;
+	padding: 10px;
+  }
+  
+  #messageInput {
+	width: 100%;
+	background-color: #303030;
+	border: none;
+	padding: 10px;
+	color: #e0e0e0;
+	font-family: "Helvetica Neue", sans-serif;
+  }
+  
+  #video-grid {
+	display: flex;
+	flex-direction: row;
+	min-height: 0;
+	flex-grow: 1;
+	height: 100%;
+	width: 100%;
+	overflow-x: auto;
+	padding: 10px;
+  }
+  
+  #video-grid::-webkit-scrollbar {
+	width: 12px;
+	height: 12px;
+  }
+  
+  #video-grid::-webkit-scrollbar-thumb {
+	background-color: #2e2e2e;
+	border-radius: 6px;
+	border: 2px solid #121212;
+  }
+  
+  #video-grid::-webkit-scrollbar-thumb:hover {
+	background-color: #5b5b5b;
+  }
+  
+.container {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  min-width: 700px;
+  background-color: #1e1e1e;
+  margin-right: 10px;
+  padding: 10px;
+}
+video {
+	min-height: 40%;
+	max-height: 100%;
+	max-width: 100%;
+	flex-grow: 1;
+	margin-bottom: 10px;
+	background-color: #1e1e1e;
+  }
+
+  #buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	margin-top: 10px;
+  }
+  
+  #buttons button {
+	background-color: #e0e0e0;
+	border: none;
+	margin: 20px 20px;
+	cursor: pointer;
+	height: 80px;
+	width: 80px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: all 0.3s ease;
+	box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
+}
+  
+  #buttons button:focus {
+	outline: none;
+  }
+  
+  #buttons button img {
+	height: 36px;
+	width: 36px;
+	filter: brightness(150%);
+	transition: all 0.3s ease;
+  }
+  
+  #buttons button:hover {
+	transform: scale(1.1);
+	box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
+}
+  
+  #buttons button:hover img {
+	filter: brightness(200%);
+}
+  
+  #buttons button:active {
+	transform: scale(0.9);
+	box-shadow: none;
+}
+  
+  #buttons button:active img {
+	filter: brightness(100%);
+  }
+
+  video{
+	background-color: #1e1e1e;
+  }
+
+  
+  ::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+	background-color: #1e1e1e;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+	background-color: #4d4d4d;
+	border-radius: 20px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+	background-color: #616161;
+  }
+  
+  ::-webkit-scrollbar-corner {
+	background-color: #1e1e1e;
+  }
+  
+  .volume-slider::-webkit-slider-runnable-track {
+	width: 100%;
+	height: 2px;
+	background-color: #4d4d4d;
+	border-radius: 10px;
+  }
+  
+  .volume-slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background-color: #e0e0e0;
+	margin-top: -7px;
+  }
+  
+  .volume-slider:focus::-webkit-slider-thumb {
+	box-shadow: 0px 0px 0px 4px rgba(50, 50, 50, 0.3);
+  }
