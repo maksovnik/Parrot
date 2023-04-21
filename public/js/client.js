@@ -145,7 +145,7 @@ function ontrack(track,stream,localMute=false,created=false){
 
         video.autoplay=true
         video.srcObject = stream
-        video.poster = "/icons/test.jpg"
+        video.poster = "/image?"+Date.now()
         stream.video = video
         stream.container = container
         stream.muteInd = muted

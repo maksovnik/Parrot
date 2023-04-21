@@ -1,13 +1,27 @@
 const express = require('express');
 const path = require('path');
 const WebSocket = require('ws');
+var fs = require('fs');
+
 
 const app = express();
+
+const imageDir = path.join(__dirname, 'public', 'images');
+const imagePaths = fs.readdirSync(imageDir).map(file => path.join(imageDir, file));
+
 
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', (req, res) => {
   res.sendFile('views/index.html', {root: __dirname });
+});
+
+
+app.get('/image', (req, res) => {
+  const randomIndex = Math.floor(Math.random() * imagePaths.length);
+  res.set('Cache-Control', 'no-cache');
+  res.set('Content-Type', 'image/jpeg');
+  res.sendFile(imagePaths[randomIndex]);
 });
 
 
