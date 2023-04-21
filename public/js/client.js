@@ -7,7 +7,8 @@ var cameraOn = false;
 var currentStreams = {}
 var dataChannel = {readyState:"closed"}
 
-var modes = ["user","environment","left","right"]
+// var modes = ["user","environment","left","right"]
+var modes = ["user","environment"]
 var fm = 0
 var remoteCam;
 
@@ -48,6 +49,19 @@ function handleMessage(string){
         connection.setRemoteDescription(pkg)
         connection.setLocalDescription()
     }
+
+    if(pkg.type=="micStatus"){
+        var status = pkg.status
+        var id = pkg.id
+        if(status){
+            currentStreams[id].muteInd.innerHTML = ""
+        }
+        else{
+            currentStreams[id].muteInd.innerHTML = "M"
+        }
+        
+    }
+
 
     if(pkg.type=="answer"){
         connection.setRemoteDescription(pkg)
@@ -92,7 +106,7 @@ function connect(standard = "wss"){
 
 function ontrack(track,stream,localMute=false,created=false){
     if(!(stream.id in currentStreams)){
-        currentStreams[stream.id] = {stream:stream}
+        currentStreams[stream.id] = stream
 
         var container = document.createElement('div')
         container.classList.add("container")
@@ -107,7 +121,9 @@ function ontrack(track,stream,localMute=false,created=false){
 
         closeButton.src = '/icons/close.png'
 
-
+        var muted = document.createElement('div')
+        muted.innerHTML = ""
+        muted.style = "color:red"
     
         var fsButton = document.createElement('img')
 
@@ -132,6 +148,7 @@ function ontrack(track,stream,localMute=false,created=false){
         video.poster = "/icons/test.jpg"
         stream.video = video
         stream.container = container
+        stream.muteInd = muted
 
 
         fsButton.src = '/icons/fullscreen.png'
@@ -160,6 +177,7 @@ function ontrack(track,stream,localMute=false,created=false){
             controls.append(closeButton)
         }
         
+        controls.append(muted)
         controls.append(slider)
         controls.append(fsButton)
         container.append(video)
@@ -225,7 +243,8 @@ async function begin(){
         console.log("Working")
         var input = document.getElementById("messageInput")
         input.addEventListener("keyup", e =>{
-            if (e.code === 'Enter') {
+            console.log(e)
+            if (e.key === 'Enter') {
                 pkg = {type:"message",message:input.value}
                 sendPackage(pkg)
 
@@ -372,6 +391,7 @@ async function begin(){
 			document.getElementById('micI').src = "icons/micOff.png" :
 			document.getElementById('micI').src = "icons/micOn.png"
 		camera.getAudioTracks()[0].enabled = !enabled;
+        sendPackage({type:"micStatus",status:!enabled,id:camera.id})
 	}
     
     connection.addTrack(camera.getTracks()[0], camera)
